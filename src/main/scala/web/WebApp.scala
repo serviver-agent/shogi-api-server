@@ -1,12 +1,14 @@
 package web
 
+import core.Shiai
+
 import scala.concurrent.Future
 import akka.actor.typed.{Behavior, Terminated}
 import akka.actor.typed.scaladsl.Behaviors
 import akka.stream.scaladsl.{Sink, Source}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpMethods._
-import akka.http.scaladsl.model.{HttpResponse, Uri, HttpRequest}
+import akka.http.scaladsl.model.{HttpResponse, Uri, HttpRequest, HttpEntity, ContentTypes}
 import akka.NotUsed
 
 object WebApp {
@@ -17,6 +19,8 @@ object WebApp {
       implicit val ec     = system.dispatcher
 
       val requestHandler: HttpRequest => HttpResponse = {
+        case req @ HttpRequest(GET, Uri.Path("/shogi"), _, _, _) =>
+          HttpResponse(200, entity = HttpEntity(ContentTypes.`application/json`, shogiJson()))
         case req @ HttpRequest(GET, Uri.Path("/greeter"), _, _, _) =>
           HttpResponse(200, entity = "OK!")
         case r: HttpRequest =>
@@ -40,6 +44,12 @@ object WebApp {
           Behaviors.stopped
       }
     }
+  }
+
+  def shogiJson(): String = {
+    import web.JsonCodec._
+    import io.circe.syntax._
+    Shiai.init.asJson.spaces2
   }
 
 }
