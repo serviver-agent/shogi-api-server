@@ -16,6 +16,7 @@ lazy val root = (project in file("."))
     name := "shogi-api-server",
     commonSettings,
     libraryDependencies ++= circe,
+    libraryDependencies ++= akka,
     libraryDependencies += scalaTest % Test
   )
 
