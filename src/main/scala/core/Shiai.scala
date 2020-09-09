@@ -2,7 +2,7 @@ package core
 
 final case class Shiai(
     shogiban: Shogiban,
-    status: Shiai.ShiaiStatus
+    shiaiStatus: Shiai.ShiaiStatus
 )
 
 object Shiai {

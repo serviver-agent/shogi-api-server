@@ -15,6 +15,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "shogi-api-server",
     commonSettings,
+    libraryDependencies ++= circe,
     libraryDependencies += scalaTest % Test
   )
 
