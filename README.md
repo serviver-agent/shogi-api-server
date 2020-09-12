@@ -125,3 +125,9 @@ Server: akka-http/10.2.0
 異常終了した時: サーバーソケットの8080番が開きっぱなしになっていると思うので、 `lsof -i:8080`, `kill [プロセスの番号]` とか
 
 なんか変なんだけど: ポート8080が取得出来なかった時に適切にエラーにせず起動しぱなしにしているので、多分そのへん
+
+# どうぶつ将棋のルール
+
+[どうぶつ将棋ルールペーパー　ねこまど](http://nekomado.heteml.jp/nekomado/data/dobutsushogi_rule/jp.pdf?PHPSESSID=e5e082ce0042a00c4b659928c8b2220b)
+
+[どうぶつしょうぎ・ルール概要　LPSA](http://joshi-shogi.com/5965/)
