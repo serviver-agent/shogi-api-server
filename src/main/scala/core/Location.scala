@@ -1,29 +1,66 @@
 package core
 
 sealed trait Location
+case class Masu(area: Area, var maybeKoma: Option[Koma]) extends Location
+case class Komadai(player: Player, var komas: Seq[Koma]) extends Location
 
 object Location {
+  val senteKomadai = Komadai(Sente, Seq.empty)
+  val goteKomadai  = Komadai(Gote, Seq.empty)
+}
 
-  final case class OnShogiban(yoko: Yoko, tate: Tate) extends Location
-  final object OnPlayer1Tegoma                        extends Location
-  final object OnPlayer2Tegoma                        extends Location
+/**
+  * マスの座標を表す
+  * @param x マスのx座標を表す。1~3がA~Cを表す
+  * @param y マスのy座標を表す。1~4が1~4を表す
+  *
+  */
+case class Area(x: Int, y: Int) {
+  assert(1 <= x && x <= 3 && 1 <= y && y <= 4)
+}
 
-  sealed abstract class Yoko(val n: Int) {
-    assert(0 <= n && n <= 2)
-  }
-  object Yoko {
-    object Y_A extends Yoko(0)
-    object Y_B extends Yoko(1)
-    object Y_C extends Yoko(2)
-  }
+object Area {
+  val a1: Area = Area(1, 1)
+  val a2       = Area(1, 2)
+  val a3       = Area(1, 3)
+  val a4       = Area(1, 4)
+  val b1       = Area(2, 1)
+  val b2       = Area(2, 2)
+  val b3       = Area(2, 3)
+  val b4       = Area(2, 4)
+  val c1       = Area(3, 1)
+  val c2       = Area(3, 2)
+  val c3       = Area(3, 3)
+  val c4       = Area(3, 4)
+}
 
-  sealed abstract class Tate(val n: Int) {
-    assert(0 <= n && n <= 3)
-  }
-  object Tate {
-    object T_1 extends Tate(0)
-    object T_2 extends Tate(1)
-    object T_3 extends Tate(2)
-    object T_4 extends Tate(3)
-  }
+
+/**
+ * 駒が動ける相対位置を表している
+ * @param x
+ * @param y
+ *
+ *
+ * (x, y)
+ *
+ * (-1, 1 ) | (0 , 1 ) | (1 , 1 )
+ * -----------------------------
+ * (-1, 0 ) | 現在位置  | (1 , 0 )
+ * -----------------------------
+ * (-1, -1) | (0 , -1) | (1 , -1)
+ */
+private[core] case class RelativeArea(x: Int , y: Int) {
+  assert(-1 <= x && x <= 1 && -1 <= y && y <= 1)
+}
+
+
+object RelativeArea {
+  val up = RelativeArea(0, 1)
+  val right = RelativeArea(1, 0)
+  val left = RelativeArea(-1, 0)
+  val down = RelativeArea(0, -1)
+  val rightUp = RelativeArea(1, 1)
+  val rightDown = RelativeArea(1, -1)
+  val leftUp = RelativeArea(-1, 1)
+  val leftDown = RelativeArea(-1, -1)
 }
