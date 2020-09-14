@@ -1,4 +1,4 @@
-import web.WebApp
+import web._
 import akka.actor.typed.{ActorSystem, Behavior, Terminated}
 import akka.actor.typed.scaladsl.Behaviors
 import akka.NotUsed
@@ -8,7 +8,11 @@ object Main extends App {
 
   def apply(): Behavior[NotUsed] = {
     Behaviors.setup { context =>
-      context.spawn(WebApp(), "webapp")
+      val roomsActor = context.spawn(Rooms(), "rooms")
+      val roomApp    = new RoomApp(roomsActor)
+      val webApp     = new WebApp(roomApp, new ShogiMock)
+      val routes     = new Routes(webApp)
+      context.spawn(WebServer(routes), "webserver")
 
       Behaviors.receiveSignal {
         case (_, Terminated(_)) =>
@@ -19,7 +23,7 @@ object Main extends App {
 
   val system = ActorSystem(Main(), "main")
 
-  println("Server online at http://localhost:8080/\nPress RETURN to stop...")
+  println("\nServer online at http://localhost:8080/\nPress RETURN to stop...\n")
   StdIn.readLine()
   system.terminate()
 
