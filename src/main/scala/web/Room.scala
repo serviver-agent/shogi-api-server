@@ -18,7 +18,7 @@ object Room {
   def room(
       messages: List[Message],
       subscribing: Set[ActorRef[Message]]
-  ): Behavior[Command] = Behaviors.receive { (context, command) =>
+  ): Behavior[Command] = Behaviors.receiveMessage { command =>
     command match {
       case AddMessage(message) => {
         subscribing.foreach(_ ! message)

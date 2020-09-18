@@ -1,5 +1,6 @@
 package web
 
+import java.util.UUID
 import java.nio.charset.StandardCharsets
 import scala.concurrent.duration._
 import akka.actor.typed.ActorRef
@@ -23,21 +24,12 @@ class RoomApp(actor: ActorRef[Rooms.Command]) {
   def handleRequest: Flow[HttpRequest, HttpResponse, NotUsed] = {
     Flow[HttpRequest].flatMapConcat { r: HttpRequest =>
       val flow = r match {
-        case req @ HttpRequest(GET, Uri.Path("/room"), _, _, _)  => listRooms
-        case req @ HttpRequest(POST, Uri.Path("/room"), _, _, _) => createRoom
-        case req @ HttpRequest(DELETE, Uri.Path(path), _, _, _)
-            if """/room/[\da-fA-F]{8}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{12}""".r.matches(path) =>
-          deleteRoom
-        case req @ HttpRequest(GET, Uri.Path(path), _, _, _)
-            if """/room/[\da-fA-F]{8}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{12}""".r.matches(path) =>
-          fetchMessages
-        case req @ HttpRequest(POST, Uri.Path(path), _, _, _)
-            if """/room/[\da-fA-F]{8}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{12}""".r.matches(path) =>
-          addMessage
-        case req @ HttpRequest(GET, Uri.Path(path), _, _, _)
-            if """/room/[\da-fA-F]{8}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{12}/stream""".r.matches(
-              path
-            ) =>
+        case HttpRequest(GET, Uri.Path(RoomUrl.ListRooms), _, _, _)         => listRooms
+        case HttpRequest(POST, Uri.Path(RoomUrl.CreateRoom), _, _, _)       => createRoom
+        case HttpRequest(DELETE, Uri.Path(RoomUrl.DeleteRoom(id)), _, _, _) => roomIdRequest(id).via(deleteRoom)
+        case HttpRequest(GET, Uri.Path(RoomUrl.FetchMessages(id)), _, _, _) => roomIdRequest(id).via(fetchMessages)
+        case HttpRequest(POST, Uri.Path(RoomUrl.AddMessage(id)), _, _, _)   => roomIdRequest(id).via(addMessage)
+        case req @ HttpRequest(GET, Uri.Path(RoomUrl.SubscribeMessage(_)), _, _, _) =>
           req.attribute(webSocketUpgrade) match {
             case Some(upgrade) =>
               Flow.fromFunction[HttpRequest, HttpResponse](req => upgrade.handleMessages(subscribeMessage(req)))
@@ -86,38 +78,25 @@ class RoomApp(actor: ActorRef[Rooms.Command]) {
     }
 
     request
-      .flatMapConcat { r: Either[HttpResponse, CreateRoomRequest] =>
-        r match {
-          case Right(value) => Source.single(value).via(flow).via(responseMapping).map(Right(_))
-          case Left(value)  => Source.single(Left(value))
-        }
+      .flatMapConcat {
+        case Right(value) => Source.single(value).via(flow).via(responseMapping).map(Right(_))
+        case Left(value)  => Source.single(Left(value))
       }
       .map(_.merge)
   }
 
-  private val deleteRoom: Flow[HttpRequest, HttpResponse, NotUsed] = {
-
-    val chatRoomId: Flow[HttpRequest, Rooms.RoomId, NotUsed] = Flow[HttpRequest].map { r =>
-      Rooms.RoomId.fromString(r.uri.path.toString.drop("/room/".length)) // FIXME refactor
-    }
-
-    val flow: Flow[Rooms.RoomId, HttpResponse, NotUsed] = Flow.fromFunction { chatRoomId =>
-      actor ! Rooms.DeleteRoom(chatRoomId)
+  private val deleteRoom: Flow[HttpRequestWithRoomId, HttpResponse, NotUsed] = {
+    Flow.fromFunction { requestWithRoomId =>
+      actor ! Rooms.DeleteRoom(requestWithRoomId.roomId)
       HttpResponse(202)
     }
-
-    chatRoomId.via(flow)
   }
 
-  private val fetchMessages: Flow[HttpRequest, HttpResponse, NotUsed] = {
+  private val fetchMessages: Flow[HttpRequestWithRoomId, HttpResponse, NotUsed] = {
     implicit val timeout: Timeout = 1.seconds
 
-    val chatRoomId: Flow[HttpRequest, Rooms.RoomId, NotUsed] = Flow[HttpRequest].map { r =>
-      Rooms.RoomId.fromString(r.uri.path.toString.drop("/room/".length)) // FIXME refactor
-    }
-
-    val flow: Flow[Rooms.RoomId, List[Room.Message], NotUsed] = ActorFlow.ask(parallelism = 8)(ref = actor)(
-      makeMessage = (chatRoomId, ref) => Rooms.RoomCommand(chatRoomId, Room.FetchMessages(ref))
+    val flow: Flow[HttpRequestWithRoomId, List[Room.Message], NotUsed] = ActorFlow.ask(parallelism = 8)(ref = actor)(
+      makeMessage = (req, ref) => Rooms.RoomCommand(req.roomId, Room.FetchMessages(ref))
     )
 
     val responseMapping: Flow[List[Room.Message], HttpResponse, NotUsed] =
@@ -128,17 +107,16 @@ class RoomApp(actor: ActorRef[Rooms.Command]) {
         HttpResponse(200, entity = responseString)
       }
 
-    chatRoomId.via(flow).via(responseMapping)
+    flow.via(responseMapping)
   }
 
-  private val addMessage: Flow[HttpRequest, HttpResponse, NotUsed] = {
-    val request: Flow[HttpRequest, Either[HttpResponse, (Rooms.RoomId, AddMessageRequest)], NotUsed] =
-      Flow[HttpRequest].flatMapConcat { r =>
-        val chatRoomId = Rooms.RoomId.fromString(r.uri.path.toString.drop("/room/".length)) // FIXME refactor
+  private val addMessage: Flow[HttpRequestWithRoomId, HttpResponse, NotUsed] = {
+    val request: Flow[HttpRequestWithRoomId, Either[HttpResponse, (Rooms.RoomId, AddMessageRequest)], NotUsed] =
+      Flow[HttpRequestWithRoomId].flatMapConcat { req =>
         val addMessageRequest: Source[Either[HttpResponse, AddMessageRequest], _] =
-          r.entity.dataBytes.map(_.decodeString(StandardCharsets.UTF_8)).map(decodeAddMessageRequest)
+          req.request.entity.dataBytes.map(_.decodeString(StandardCharsets.UTF_8)).map(decodeAddMessageRequest)
         addMessageRequest.flatMapConcat {
-          case Right(value) => Source.single(Right((chatRoomId, value)))
+          case Right(value) => Source.single(Right((req.roomId, value)))
           case Left(value)  => Source.single(Left(value))
         }
       }
@@ -191,6 +169,19 @@ class RoomApp(actor: ActorRef[Rooms.Command]) {
 }
 
 object RoomApp {
+
+  case class HttpRequestWithRoomId(request: HttpRequest, roomId: Rooms.RoomId)
+  def roomIdRequest(roomId: String): Flow[HttpRequest, HttpRequestWithRoomId, NotUsed] =
+    Flow[HttpRequest].map(HttpRequestWithRoomId(_, Rooms.RoomId(UUID.fromString(roomId))))
+
+  object RoomUrl {
+    val ListRooms        = "/room"
+    val CreateRoom       = "/room"
+    val DeleteRoom       = """/room/([\da-fA-F]{8}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{12})""".r
+    val FetchMessages    = """/room/([\da-fA-F]{8}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{12})""".r
+    val AddMessage       = """/room/([\da-fA-F]{8}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{12})""".r
+    val SubscribeMessage = """/room/([\da-fA-F]{8}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{12})/stream""".r
+  }
 
   case class CreateRoomRequest(name: String)
   case class RoomResponse(chatRoomId: String, name: String)
