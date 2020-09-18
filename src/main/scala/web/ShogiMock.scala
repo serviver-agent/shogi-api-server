@@ -23,77 +23,74 @@ class ShogiMock {
   }
 
   def shogiJson(): String = {
-    import JsonCodec._
-    import io.circe.syntax._
-    Shiai.init.asJson.spaces2
+    JsonCodec.shiaiEncoder(Shiai.init).spaces2
   }
 
   object JsonCodec {
 
     import core._
     import io.circe._
-    import io.circe.syntax._
 
-    implicit lazy val komaEncoder: Encoder[Koma] = new Encoder[Koma] {
+    val komaEncoder: Encoder[Koma] = new Encoder[Koma] {
       override def apply(a: Koma): Json = a match {
-        case Koma.Lion   => "Lion".asJson
-        case Koma.Kirin  => "Kirin".asJson
-        case Koma.Zou    => "Zou".asJson
-        case Koma.Hiyoko => "Hiyoko".asJson
+        case Koma.Lion   => Json.fromString("Lion")
+        case Koma.Kirin  => Json.fromString("Kirin")
+        case Koma.Zou    => Json.fromString("Zou")
+        case Koma.Hiyoko => Json.fromString("Hiyoko")
       }
     }
 
-    implicit lazy val locationEncoder: Encoder[Location] = new Encoder[Location] {
+    val locationEncoder: Encoder[Location] = new Encoder[Location] {
       override def apply(a: Location): Json = a match {
         case Location.OnPlayer1Tegoma =>
           Json.obj(
-            "tpe" -> "onPlayer1Tegoma".asJson
+            "tpe" -> Json.fromString("onPlayer1Tegoma")
           )
         case Location.OnPlayer2Tegoma =>
           Json.obj(
-            "tpe" -> "onPlayer1Tegoma".asJson
+            "tpe" -> Json.fromString("onPlayer1Tegoma")
           )
         case Location.OnShogiban(yoko, tate) =>
           Json.obj(
-            "tpe"  -> "onShogiban".asJson,
-            "yoko" -> yoko.n.asJson,
-            "tate" -> tate.n.asJson
+            "tpe"  -> Json.fromString("onShogiban"),
+            "yoko" -> Json.fromInt(yoko.n),
+            "tate" -> Json.fromInt(tate.n)
           )
       }
     }
 
-    implicit lazy val komaStatusEncoder: Encoder[KomaStatus] = new Encoder[KomaStatus] {
+    val komaStatusEncoder: Encoder[KomaStatus] = new Encoder[KomaStatus] {
       override def apply(a: KomaStatus): Json = Json.obj(
-        "koma"     -> a.koma.asJson,
-        "loaction" -> a.location.asJson
+        "koma"     -> komaEncoder(a.koma),
+        "loaction" -> locationEncoder(a.location)
       )
     }
 
-    implicit lazy val shogibanEncoder: Encoder[Shogiban] = new Encoder[Shogiban] {
+    val shogibanEncoder: Encoder[Shogiban] = new Encoder[Shogiban] {
       override def apply(a: Shogiban): Json = Json.obj(
-        "lion1"   -> a.lion1.asJson,
-        "lion2"   -> a.lion2.asJson,
-        "kirin1"  -> a.kirin1.asJson,
-        "kirin2"  -> a.kirin2.asJson,
-        "zou1"    -> a.zou1.asJson,
-        "zou2"    -> a.zou2.asJson,
-        "hiyoko1" -> a.hiyoko1.asJson,
-        "hiyoko2" -> a.hiyoko2.asJson
+        "lion1"   -> komaStatusEncoder(a.lion1),
+        "lion2"   -> komaStatusEncoder(a.lion2),
+        "kirin1"  -> komaStatusEncoder(a.kirin1),
+        "kirin2"  -> komaStatusEncoder(a.kirin2),
+        "zou1"    -> komaStatusEncoder(a.zou1),
+        "zou2"    -> komaStatusEncoder(a.zou2),
+        "hiyoko1" -> komaStatusEncoder(a.hiyoko1),
+        "hiyoko2" -> komaStatusEncoder(a.hiyoko2)
       )
     }
 
-    implicit lazy val shiaiStatusEncoder: Encoder[Shiai.ShiaiStatus] = new Encoder[Shiai.ShiaiStatus] {
+    val shiaiStatusEncoder: Encoder[Shiai.ShiaiStatus] = new Encoder[Shiai.ShiaiStatus] {
       override def apply(a: Shiai.ShiaiStatus): Json = a match {
-        case Shiai.ShiaiStatus.Player1 => "Player1".asJson
-        case Shiai.ShiaiStatus.Player2 => "Player2".asJson
-        case Shiai.ShiaiStatus.Finish  => "Finish".asJson
+        case Shiai.ShiaiStatus.Player1 => Json.fromString("Player1")
+        case Shiai.ShiaiStatus.Player2 => Json.fromString("Player2")
+        case Shiai.ShiaiStatus.Finish  => Json.fromString("Finish")
       }
     }
 
-    implicit lazy val shiaiEncoder: Encoder[Shiai] = new Encoder[Shiai] {
+    val shiaiEncoder: Encoder[Shiai] = new Encoder[Shiai] {
       override def apply(a: Shiai): Json = Json.obj(
-        "shogiban"    -> a.shogiban.asJson,
-        "shiaiStatus" -> a.shiaiStatus.asJson
+        "shogiban"    -> shogibanEncoder(a.shogiban),
+        "shiaiStatus" -> shiaiStatusEncoder(a.shiaiStatus)
       )
     }
 

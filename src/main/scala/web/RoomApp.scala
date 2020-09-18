@@ -194,9 +194,7 @@ object RoomApp {
   private val roomEncoder: Encoder[RoomResponse]          = deriveEncoder
   def encodeCreateRoomResponse(res: RoomResponse): String = roomEncoder(res).noSpaces
   def encodeListRoomResponse(res: List[RoomResponse]): String = {
-    import io.circe.syntax._
-    implicit val encoder = roomEncoder
-    res.asJson.noSpaces
+    Encoder.encodeList(roomEncoder)(res).noSpaces
   }
   case class AddMessageRequest(body: String)
   private val addMessageDecoder: Decoder[AddMessageRequest] = deriveDecoder
@@ -208,14 +206,10 @@ object RoomApp {
   case class MessageResponse(body: String)
   private val messageEncoder: Encoder[MessageResponse] = deriveEncoder
   def encodeMessageResponse(res: MessageResponse): String = {
-    import io.circe.syntax._
-    implicit val encoder = messageEncoder
-    res.asJson.noSpaces
+    messageEncoder(res).noSpaces
   }
   def encodeFetchMessageResponse(res: List[MessageResponse]): String = {
-    import io.circe.syntax._
-    implicit val encoder = messageEncoder
-    res.asJson.noSpaces
+    Encoder.encodeList(messageEncoder)(res).noSpaces
   }
 
 }
