@@ -1,7 +1,7 @@
 package core
 
 import core.Area._
-import core.Koma.{Hiyoko, Kirin, Lion, Zou}
+import core.Koma.{Hiyoko, Kirin, Lion, Niwatori, Zou}
 
 /**
   * どうぶつしょうぎの盤面を表す
@@ -22,9 +22,40 @@ case class Board(
     c4: Masu[C4.type],
     senteKomadai: Komadai[Sente.type],
     goteKomadai: Komadai[Gote.type]
-)
+) {
+  val actualKomas: Seq[Koma] = Seq(
+    a1.maybeKoma,
+    a2.maybeKoma,
+    a3.maybeKoma,
+    a4.maybeKoma,
+    b1.maybeKoma,
+    b2.maybeKoma,
+    b3.maybeKoma,
+    b4.maybeKoma,
+    c1.maybeKoma,
+    c2.maybeKoma,
+    c3.maybeKoma,
+    c4.maybeKoma
+  ).flatten ++ senteKomadai.komas ++ goteKomadai.komas
+
+  assert(
+    actualKomas.collect { case lion: Lion     => lion }.length == 2 &&
+      actualKomas.collect { case kirin: Kirin => kirin }.length == 2 &&
+      actualKomas.collect { case zou: Zou     => zou }.length == 2 &&
+      (
+        (actualKomas.collect { case hiyoko: Hiyoko       => hiyoko }.length == 2 &&
+          actualKomas.collect { case niwatori: Niwatori => niwatori }.length == 0) ||
+          (
+            actualKomas.collect { case hiyoko: Hiyoko       => hiyoko }.length == 0 &&
+            actualKomas.collect { case niwatori: Niwatori => niwatori }.length == 2
+          ) ||
+          (actualKomas.collect { case hiyoko: Hiyoko      => hiyoko }.length == 1 &&
+            actualKomas.collect { case niwatori: Niwatori => niwatori }.length == 1)
+      )
+  )
+}
 object Board {
-  def init: Board = Board(
+  def factory: Board = Board(
     a1 = Masu(A1, Some(Kirin(Gote))),
     a2 = Masu(A2, None),
     a3 = Masu(A3, None),

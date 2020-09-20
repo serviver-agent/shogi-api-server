@@ -5,7 +5,7 @@ sealed trait Location
 /**
   *  しょうぎばんのマスを表す
   * @param area マスの座標を表す
-  * @param maybeKoma マスに乗っている駒を表す
+  * @param maybeKoma マスに乗っている駒、または何も乗っていないことを表す
   */
 case class Masu[A <: Area](area: A, maybeKoma: Option[Koma]) extends Location {
   val x = area.x
@@ -28,17 +28,17 @@ sealed abstract class Area(val x: Int, val y: Int) {
 
 object Area {
   case object A1 extends Area(1, 1)
-  case object A2 extends Area(2, 1)
-  case object A3 extends Area(3, 1)
-  case object A4 extends Area(4, 1)
-  case object B1 extends Area(1, 2)
+  case object A2 extends Area(1, 2)
+  case object A3 extends Area(1, 3)
+  case object A4 extends Area(1, 4)
+  case object B1 extends Area(2, 1)
   case object B2 extends Area(2, 2)
-  case object B3 extends Area(3, 2)
-  case object B4 extends Area(4, 2)
-  case object C1 extends Area(1, 3)
-  case object C2 extends Area(2, 3)
+  case object B3 extends Area(2, 3)
+  case object B4 extends Area(2, 4)
+  case object C1 extends Area(3, 1)
+  case object C2 extends Area(3, 2)
   case object C3 extends Area(3, 3)
-  case object C4 extends Area(4, 3)
+  case object C4 extends Area(3, 4)
 }
 
 /**

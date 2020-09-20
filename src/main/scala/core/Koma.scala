@@ -7,24 +7,24 @@ import core.RelativeArea._
   *
   */
 sealed trait Koma {
-  def hasPlayer: Player
-  def action: Set[RelativeArea]
+  def player: Player
+  def relativeArea: Set[RelativeArea]
 }
 
 object Koma {
-  case class Lion(hasPlayer: Player) extends Koma {
-    override val action: Set[RelativeArea] = Set(Up, Right, Down, Left, RightUp, RightDown, LeftUp, LeftDown)
+  case class Lion(player: Player) extends Koma {
+    override val relativeArea: Set[RelativeArea] = Set(Up, Right, Down, Left, RightUp, RightDown, LeftUp, LeftDown)
   }
-  case class Kirin(hasPlayer: Player) extends Koma {
-    override val action: Set[RelativeArea] = Set(Up, Right, Down, Left)
+  case class Kirin(player: Player) extends Koma {
+    override val relativeArea: Set[RelativeArea] = Set(Up, Right, Down, Left)
   }
-  case class Zou(hasPlayer: Player) extends Koma {
-    override val action: Set[RelativeArea] = Set(RightUp, RightDown, LeftUp, LeftDown)
+  case class Zou(player: Player) extends Koma {
+    override val relativeArea: Set[RelativeArea] = Set(RightUp, RightDown, LeftUp, LeftDown)
   }
-  case class Hiyoko(hasPlayer: Player) extends Koma {
-    override val action: Set[RelativeArea] = Set(Up)
+  case class Hiyoko(player: Player) extends Koma {
+    override val relativeArea: Set[RelativeArea] = Set(Up)
   }
-  case class Niwatori(hasPlayer: Player) extends Koma {
-    override val action: Set[RelativeArea] = Set(Up, Right, Down, Left, RightUp, RightDown)
+  case class Niwatori(player: Player) extends Koma {
+    override val relativeArea: Set[RelativeArea] = Set(Up, Right, Down, Left, RightUp, RightDown)
   }
 }

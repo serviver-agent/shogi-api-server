@@ -15,6 +15,6 @@ object Shiai {
     object Finish  extends ShiaiStatus
   }
 
-  def init: Shiai = Shiai(Board.init, ShiaiStatus.Player1)
+  def init: Shiai = Shiai(Board.factory, ShiaiStatus.Player1)
 
 }
