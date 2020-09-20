@@ -1,7 +1,9 @@
 package core
 
+import core.Board
+
 final case class Shiai(
-    shogiban: Shogiban,
+    shogiban: Board,
     shiaiStatus: Shiai.ShiaiStatus
 )
 
@@ -13,6 +15,6 @@ object Shiai {
     object Finish  extends ShiaiStatus
   }
 
-  def init: Shiai = Shiai(Shogiban.init, ShiaiStatus.Player1)
+  def init: Shiai = Shiai(Board.factory, ShiaiStatus.Player1)
 
 }
