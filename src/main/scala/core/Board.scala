@@ -2,7 +2,6 @@ package core
 
 import core.Area._
 import core.Koma.{Hiyoko, Kirin, Lion, Zou}
-import core.Location.{goteKomadai, senteKomadai}
 
 /**
   * どうぶつしょうぎの盤面を表す
@@ -21,8 +20,8 @@ case class Board(
     c2: Masu[C2.type],
     c3: Masu[C3.type],
     c4: Masu[C4.type],
-    senteKomadai: Komadai,
-    goteKomadai: Komadai
+    senteKomadai: Komadai[Sente.type],
+    goteKomadai: Komadai[Gote.type]
 )
 object Board {
   def init: Board = Board(
@@ -38,8 +37,7 @@ object Board {
     c2 = Masu(C2, None),
     c3 = Masu(C3, None),
     c4 = Masu(C4, Some(Kirin(Sente))),
-    senteKomadai = senteKomadai,
-    goteKomadai = goteKomadai
+    senteKomadai = Komadai(Sente, Seq.empty),
+    goteKomadai = Komadai(Gote, Seq.empty)
   )
 }
-
