@@ -10,7 +10,7 @@ import akka.NotUsed
 class ShogiMock {
 
   def handleRequest: Flow[HttpRequest, HttpResponse, NotUsed] = {
-    Flow[HttpRequest].flatMapConcat { r: HttpRequest =>
+    Flow[HttpRequest].flatMapConcat { (r: HttpRequest) =>
       val flow = r match {
         case req @ HttpRequest(GET, Uri.Path("/shogi"), _, _, _) =>
           Flow.fromFunction((_: HttpRequest) =>

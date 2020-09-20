@@ -13,16 +13,22 @@ import akka.http.scaladsl.model.AttributeKeys.webSocketUpgrade
 import akka.http.scaladsl.model.ws.{TextMessage, BinaryMessage, Message}
 import akka.util.Timeout
 import akka.NotUsed
-import io.circe.{Decoder, Encoder}
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import io.circe.{Decoder, Encoder, Json}
 import io.circe.parser
+
+// TODO: remove this import
+// implicit conversion String => ResponseEntity
+// ex:
+// HttpResponse(200, entity = "shogi-api-server"))
+//                            ^^^^^^^^^^^^^^^^^^
+import scala.language.implicitConversions
 
 import RoomApp._
 
 class RoomApp(actor: ActorRef[Rooms.Command]) {
 
   def handleRequest: Flow[HttpRequest, HttpResponse, NotUsed] = {
-    Flow[HttpRequest].flatMapConcat { r: HttpRequest =>
+    Flow[HttpRequest].flatMapConcat { (r: HttpRequest) =>
       val flow = r match {
         case HttpRequest(GET, Uri.Path(RoomUrl.ListRooms), _, _, _)         => listRooms
         case HttpRequest(POST, Uri.Path(RoomUrl.CreateRoom), _, _, _)       => createRoom
@@ -64,7 +70,7 @@ class RoomApp(actor: ActorRef[Rooms.Command]) {
     implicit val timeout: Timeout = 1.seconds
 
     val request: Flow[HttpRequest, Either[HttpResponse, CreateRoomRequest], NotUsed] = Flow[HttpRequest].flatMapConcat {
-      r: HttpRequest => r.entity.dataBytes.map(_.decodeString(StandardCharsets.UTF_8)).map(decodeCreateRoomRequest)
+      _.entity.dataBytes.map(_.decodeString(StandardCharsets.UTF_8)).map(decodeCreateRoomRequest)
     }
 
     val flow: Flow[CreateRoomRequest, Rooms.RoomInfo, NotUsed] = ActorFlow.ask(parallelism = 8)(ref = actor)(
@@ -185,26 +191,43 @@ object RoomApp {
 
   case class CreateRoomRequest(name: String)
   case class RoomResponse(chatRoomId: String, name: String)
-  private val createRoomDecoder: Decoder[CreateRoomRequest] = deriveDecoder
+  private val createRoomDecoder: Decoder[CreateRoomRequest] = Decoder.instance { c =>
+    for {
+      name <- c.downField("name").as[String]
+    } yield CreateRoomRequest(name)
+  }
   def decodeCreateRoomRequest(in: String): Either[HttpResponse, CreateRoomRequest] = {
     parser.parse(in).flatMap(createRoomDecoder.decodeJson).left.map { _ =>
       HttpResponse(400, entity = "bad request. invalid json.")
     }
   }
-  private val roomEncoder: Encoder[RoomResponse]          = deriveEncoder
+  private val roomEncoder: Encoder[RoomResponse] = Encoder.instance { a =>
+    Json.obj(
+      "chatRoomId" -> Json.fromString(a.chatRoomId),
+      "name"       -> Json.fromString(a.name)
+    )
+  }
   def encodeCreateRoomResponse(res: RoomResponse): String = roomEncoder(res).noSpaces
   def encodeListRoomResponse(res: List[RoomResponse]): String = {
     Encoder.encodeList(roomEncoder)(res).noSpaces
   }
   case class AddMessageRequest(body: String)
-  private val addMessageDecoder: Decoder[AddMessageRequest] = deriveDecoder
+  private val addMessageDecoder: Decoder[AddMessageRequest] = Decoder.instance { c =>
+    for {
+      body <- c.downField("body").as[String]
+    } yield AddMessageRequest(body)
+  }
   def decodeAddMessageRequest(in: String): Either[HttpResponse, AddMessageRequest] = {
     parser.parse(in).flatMap(addMessageDecoder.decodeJson).left.map { _ =>
       HttpResponse(400, entity = "bad request. invalid json.")
     }
   }
   case class MessageResponse(body: String)
-  private val messageEncoder: Encoder[MessageResponse] = deriveEncoder
+  private val messageEncoder: Encoder[MessageResponse] = Encoder.instance { a =>
+    Json.obj(
+      "body" -> Json.fromString(a.body)
+    )
+  }
   def encodeMessageResponse(res: MessageResponse): String = {
     messageEncoder(res).noSpaces
   }

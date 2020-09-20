@@ -5,8 +5,8 @@ sealed trait Location
 object Location {
 
   final case class OnShogiban(yoko: Yoko, tate: Tate) extends Location
-  final object OnPlayer1Tegoma                        extends Location
-  final object OnPlayer2Tegoma                        extends Location
+  object OnPlayer1Tegoma                              extends Location
+  object OnPlayer2Tegoma                              extends Location
 
   sealed abstract class Yoko(val n: Int) {
     assert(0 <= n && n <= 2)
