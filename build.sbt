@@ -1,6 +1,6 @@
 import Dependencies._
 
-val dottyVersion     = "0.27.0-RC1"
+val dottyVersion     = "0.24.0-RC1"
 val scala213Version     = "2.13.2"
 
 ThisBuild / scalaVersion          := scala213Version
@@ -14,14 +14,16 @@ lazy val commonSettings = Seq(
   scalafmtOnCompile := true
 )
 
+lazy val testSettings = Seq(libraryDependencies += scalaTest)
+
 lazy val root = (project in file("."))
   .settings(
     name := "shogi-api-server",
     commonSettings,
+    testSettings,
     libraryDependencies ++= Seq(
       circe,
-      akka,
-      Seq(scalaTest % Test)
+      akka
     ).flatten.map(_.withDottyCompat(scalaVersion.value))
   ) 
 
