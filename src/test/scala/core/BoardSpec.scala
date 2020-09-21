@@ -4,6 +4,7 @@ import core.Area.{A1, A2, A3, A4, B1, B2, B3, B4, C1, C2, C3, C4}
 import core.Koma.{Hiyoko, Kirin, Lion, Zou}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import scala.language.implicitConversions
 
 class BoardSpec extends AnyFlatSpec with Matchers {
   "Board" should "盤面を初期状態にできる" in {
