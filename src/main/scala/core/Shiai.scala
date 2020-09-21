@@ -1,18 +1,20 @@
 package core
 
+import core.Board
+
 final case class Shiai(
-    shogiban: Shogiban,
-    shiaiStatus: Shiai.ShiaiStatus
+    board: Board,
+    status: Shiai.Status
 )
 
 object Shiai {
-  sealed trait ShiaiStatus
-  object ShiaiStatus {
-    object Player1 extends ShiaiStatus
-    object Player2 extends ShiaiStatus
-    object Finish  extends ShiaiStatus
+  sealed trait Status
+  object Status {
+    object Player1 extends Status
+    object Player2 extends Status
+    object Finish  extends Status
   }
 
-  def init: Shiai = Shiai(Shogiban.init, ShiaiStatus.Player1)
+  def init: Shiai = Shiai(Board.factory, Status.Player1)
 
 }
