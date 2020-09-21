@@ -43,9 +43,23 @@ class BoardSpec extends AnyFlatSpec with Matchers {
         c2 = Masu(C2, None),
         c3 = Masu(C3, None),
         c4 = Masu(C4, Some(Kirin(Sente))),
-        senteKomadai = Komadai(Sente, Seq(Kirin(Sente), Kirin(Sente), Zou(Sente), Zou(Sente), Lion(Sente), Lion(Sente), Hiyoko(Sente), Hiyoko(Sente), Hiyoko(Sente))),
-        goteKomadai = Komadai(Gote, Seq.empty))
-      }
+        senteKomadai = Komadai(
+          Sente,
+          Seq(
+            Kirin(Sente),
+            Kirin(Sente),
+            Zou(Sente),
+            Zou(Sente),
+            Lion(Sente),
+            Lion(Sente),
+            Hiyoko(Sente),
+            Hiyoko(Sente),
+            Hiyoko(Sente)
+          )
+        ),
+        goteKomadai = Komadai(Gote, Seq.empty)
+      )
+    }
   }
 
   it should "実際の駒より少ない駒が存在する盤面はassertionErrorになる" in {
@@ -63,8 +77,12 @@ class BoardSpec extends AnyFlatSpec with Matchers {
         c2 = Masu(C2, None),
         c3 = Masu(C3, None),
         c4 = Masu(C4, Some(Kirin(Sente))),
-        senteKomadai = Komadai(Sente, Seq(Kirin(Sente), Kirin(Sente), Zou(Sente), Zou(Sente), Lion(Sente), Lion(Sente), Hiyoko(Sente))),
-        goteKomadai = Komadai(Gote, Seq.empty))
+        senteKomadai = Komadai(
+          Sente,
+          Seq(Kirin(Sente), Kirin(Sente), Zou(Sente), Zou(Sente), Lion(Sente), Lion(Sente), Hiyoko(Sente))
+        ),
+        goteKomadai = Komadai(Gote, Seq.empty)
+      )
     }
   }
 }
