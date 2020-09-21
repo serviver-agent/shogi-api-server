@@ -23,36 +23,9 @@ case class Board(
     senteKomadai: Komadai[Sente.type],
     goteKomadai: Komadai[Gote.type]
 ) {
-  val actualKomas: Seq[Koma] = Seq(
-    a1.maybeKoma,
-    a2.maybeKoma,
-    a3.maybeKoma,
-    a4.maybeKoma,
-    b1.maybeKoma,
-    b2.maybeKoma,
-    b3.maybeKoma,
-    b4.maybeKoma,
-    c1.maybeKoma,
-    c2.maybeKoma,
-    c3.maybeKoma,
-    c4.maybeKoma
-  ).flatten ++ senteKomadai.komas ++ goteKomadai.komas
 
-  assert(
-    actualKomas.collect { case lion: Lion     => lion }.length == 2 &&
-      actualKomas.collect { case kirin: Kirin => kirin }.length == 2 &&
-      actualKomas.collect { case zou: Zou     => zou }.length == 2 &&
-      (
-        (actualKomas.collect { case hiyoko: Hiyoko       => hiyoko }.length == 2 &&
-          actualKomas.collect { case niwatori: Niwatori => niwatori }.length == 0) ||
-          (
-            actualKomas.collect { case hiyoko: Hiyoko       => hiyoko }.length == 0 &&
-            actualKomas.collect { case niwatori: Niwatori => niwatori }.length == 2
-          ) ||
-          (actualKomas.collect { case hiyoko: Hiyoko      => hiyoko }.length == 1 &&
-            actualKomas.collect { case niwatori: Niwatori => niwatori }.length == 1)
-      )
-  )
+  Board.validateKomaCount(this)
+
 }
 object Board {
   def factory: Board = Board(
@@ -71,4 +44,32 @@ object Board {
     senteKomadai = Komadai(Sente, Seq.empty),
     goteKomadai = Komadai(Gote, Seq.empty)
   )
+
+  private def validateKomaCount(board: Board): Unit = {
+    val komas: Seq[Koma] = Seq(
+      board.a1.maybeKoma,
+      board.a2.maybeKoma,
+      board.a3.maybeKoma,
+      board.a4.maybeKoma,
+      board.b1.maybeKoma,
+      board.b2.maybeKoma,
+      board.b3.maybeKoma,
+      board.b4.maybeKoma,
+      board.c1.maybeKoma,
+      board.c2.maybeKoma,
+      board.c3.maybeKoma,
+      board.c4.maybeKoma
+    ).flatten ++ board.senteKomadai.komas ++ board.goteKomadai.komas
+
+    val lionCount     = komas.collect { case lion: Lion         => lion }.length
+    val kirinCount    = komas.collect { case kirin: Kirin       => kirin }.length
+    val zouCount      = komas.collect { case zou: Zou           => zou }.length
+    val hiyokoCount   = komas.collect { case hiyoko: Hiyoko     => hiyoko }.length
+    val niwatoriCount = komas.collect { case niwatori: Niwatori => niwatori }.length
+
+    assert(lionCount == 2)
+    assert(kirinCount == 2)
+    assert(zouCount == 2)
+    assert(hiyokoCount + niwatoriCount == 2)
+  }
 }

@@ -1,22 +1,5 @@
 package core
 
-sealed trait Location
-
-/**
-  *  しょうぎばんのマスを表す
-  * @param area マスの座標を表す
-  * @param maybeKoma マスに乗っている駒、または何も乗っていないことを表す
-  */
-case class Masu[A <: Area](area: A, maybeKoma: Option[Koma]) extends Location {
-  val x = area.x
-  val y = area.y
-}
-
-/**
-  * 駒台を表す
-  */
-case class Komadai[P <: Player](player: P, komas: Seq[Koma]) extends Location
-
 /**
   * マスの座標を表す
   * @param x マスのx座標を表す。1~3がA~Cを表す
