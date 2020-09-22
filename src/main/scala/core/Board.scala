@@ -15,6 +15,35 @@ case class Board(
 ) {
 
   validateKomaCount(this)
+  validateDuplicateMasu(this)
+
+  // validateDuplicateMasu により確実に取得できる
+  private def getMasu(area: Area): Masu = masus.find(_.area == area).get
+
+  def moveKoma(from: Area, to: Area, player: Player): Either[MoveKomaError, Board] = {
+    val fromMasu = getMasu(from)
+    val toMasu   = getMasu(to)
+    for {
+      fromKoma <- fromMasu.maybeKoma.toRight(MoveKomaError.FromKomaNotFound)
+      _        <- Either.cond(fromKoma.player == player, (), MoveKomaError.FromKomaIsNotOwnedByThatPlayer)
+      toKomaOpt = toMasu.maybeKoma
+      _ <- Either.cond(
+        toKomaOpt.map(_.player) != Some(player),
+        (),
+        MoveKomaError.IdousakiniJibunnoKomagaAru
+      )
+      canMoveAreas = fromKoma.relativeArea.map(_.seenFrom(player)).map(from.move).flatten
+      _ <- Either.cond(canMoveAreas.contains(to), (), MoveKomaError.KomahaSonobashoniIdouDekinai)
+    } yield {
+      val (nextSenteKomadai, nextGoteKomadai) = (toKomaOpt, player) match {
+        case (None, _)             => (senteKomadai, goteKomadai)
+        case (Some(toKoma), Sente) => (senteKomadai.add(toKoma), goteKomadai)
+        case (Some(toKoma), Gote)  => (senteKomadai, goteKomadai.add(toKoma))
+      }
+      val nextMasus = Masu.replaceMasu(Masu.replaceMasu(masus, from, None), to, Some(fromKoma.owned(player)))
+      Board(nextMasus, nextSenteKomadai, nextGoteKomadai)
+    }
+  }
 
 }
 object Board {
@@ -52,6 +81,19 @@ object Board {
     assert(kirinCount == 2)
     assert(zouCount == 2)
     assert(hiyokoCount + niwatoriCount == 2)
+  }
+
+  private def validateDuplicateMasu(board: Board): Unit = {
+    assert(board.masus.size == 12)
+    assert(board.masus.toList.map(_.area).distinct.length == 12)
+  }
+
+  sealed trait MoveKomaError
+  object MoveKomaError {
+    object FromKomaNotFound               extends MoveKomaError
+    object FromKomaIsNotOwnedByThatPlayer extends MoveKomaError
+    object IdousakiniJibunnoKomagaAru     extends MoveKomaError
+    object KomahaSonobashoniIdouDekinai   extends MoveKomaError
   }
 
 }

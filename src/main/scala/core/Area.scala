@@ -1,31 +1,41 @@
 package core
 
 /**
-  * マスの座標を表す
+  * 先手番から見たマスの座標を表す
   * @param x マスのx座標を表す。1~3がA~Cを表す
   * @param y マスのy座標を表す。1~4が1~4を表す　
   */
-sealed abstract class Area(val x: Int, val y: Int) {
+case class Area(val x: Int, val y: Int) {
   assert(1 <= x && x <= 3 && 1 <= y && y <= 4)
+
+  /**
+    * 相対位置分移動するが、盤面からはみ出る場合はNone
+    */
+  final def move(relativeArea: RelativeArea): Option[Area] = {
+    val nextX = x + relativeArea.x
+    val nextY = y - relativeArea.y // FIXME: Areaのyは下向きが正だが、RelativeAreaのyは上向きが正である
+    if (1 <= nextX && nextX <= 3 && 1 <= nextY && nextY <= 4) Some(Area(nextX, nextY))
+    else None
+  }
 }
 
 object Area {
-  case object A1 extends Area(1, 1)
-  case object A2 extends Area(1, 2)
-  case object A3 extends Area(1, 3)
-  case object A4 extends Area(1, 4)
-  case object B1 extends Area(2, 1)
-  case object B2 extends Area(2, 2)
-  case object B3 extends Area(2, 3)
-  case object B4 extends Area(2, 4)
-  case object C1 extends Area(3, 1)
-  case object C2 extends Area(3, 2)
-  case object C3 extends Area(3, 3)
-  case object C4 extends Area(3, 4)
+  val A1: Area = Area(1, 1)
+  val A2: Area = Area(1, 2)
+  val A3: Area = Area(1, 3)
+  val A4: Area = Area(1, 4)
+  val B1: Area = Area(2, 1)
+  val B2: Area = Area(2, 2)
+  val B3: Area = Area(2, 3)
+  val B4: Area = Area(2, 4)
+  val C1: Area = Area(3, 1)
+  val C2: Area = Area(3, 2)
+  val C3: Area = Area(3, 3)
+  val C4: Area = Area(3, 4)
 }
 
 /**
-  * 駒が動ける相対位置を表している
+  * 先手番から見た駒が動ける相対位置を表している
   * @param x
   * @param y
   *
@@ -40,6 +50,11 @@ object Area {
   */
 private[core] case class RelativeArea(x: Int, y: Int) {
   assert(-1 <= x && x <= 1 && -1 <= y && y <= 1)
+
+  final def seenFrom(player: Player): RelativeArea = player match {
+    case Sente => this
+    case Gote  => RelativeArea(-x, -y)
+  }
 }
 
 object RelativeArea {

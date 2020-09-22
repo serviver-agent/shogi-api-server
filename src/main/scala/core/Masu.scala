@@ -9,3 +9,11 @@ case class Masu(area: Area, maybeKoma: Option[Koma]) {
   val x = area.x
   val y = area.y
 }
+
+object Masu {
+
+  def replaceMasu(masus: Set[Masu], area: Area, maybeKoma: Option[Koma]): Set[Masu] = {
+    masus.filterNot(_.area == area) + Masu(area, maybeKoma)
+  }
+
+}
