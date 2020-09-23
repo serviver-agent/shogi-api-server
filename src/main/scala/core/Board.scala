@@ -32,7 +32,7 @@ case class Board(
         (),
         MoveKomaError.IdousakiniJibunnoKomagaAru
       )
-      canMoveAreas = fromKoma.relativeArea.map(_.seenFrom(player)).map(from.move).flatten
+      canMoveAreas = fromKoma.relativeArea(player).map(from.move).flatten
       _ <- Either.cond(canMoveAreas.contains(to), (), MoveKomaError.KomahaSonobashoniIdouDekinai)
     } yield {
       val (nextSenteKomadai, nextGoteKomadai) = (toKomaOpt, player) match {
