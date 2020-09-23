@@ -2,64 +2,74 @@ package core
 
 import core.Area._
 import core.Koma.{Hiyoko, Kirin, Lion, Niwatori, Zou}
+import Board._
 
 /**
   * どうぶつしょうぎの盤面を表す
   *
   */
 case class Board(
-    a1: Masu[A1.type],
-    a2: Masu[A2.type],
-    a3: Masu[A3.type],
-    a4: Masu[A4.type],
-    b1: Masu[B1.type],
-    b2: Masu[B2.type],
-    b3: Masu[B3.type],
-    b4: Masu[B4.type],
-    c1: Masu[C1.type],
-    c2: Masu[C2.type],
-    c3: Masu[C3.type],
-    c4: Masu[C4.type],
+    masus: Set[Masu],
     senteKomadai: Komadai[Sente.type],
     goteKomadai: Komadai[Gote.type]
 ) {
 
-  Board.validateKomaCount(this)
+  validateKomaCount(this)
+  validateDuplicateMasu(this)
+
+  // validateDuplicateMasu により確実に取得できる
+  private def getMasu(area: Area): Masu = masus.find(_.area == area).get
+
+  def moveKoma(from: Area, to: Area, player: Player): Either[MoveKomaError, Board] = {
+    val fromMasu = getMasu(from)
+    val toMasu   = getMasu(to)
+    for {
+      fromKoma <- fromMasu.maybeKoma.toRight(MoveKomaError.FromKomaNotFound)
+      _        <- Either.cond(fromKoma.player == player, (), MoveKomaError.FromKomaIsNotOwnedByThatPlayer)
+      toKomaOpt = toMasu.maybeKoma
+      _ <- Either.cond(
+        toKomaOpt.map(_.player) != Some(player),
+        (),
+        MoveKomaError.IdousakiniJibunnoKomagaAru
+      )
+      canMoveAreas = fromKoma.relativeArea(player).map(from.move).flatten
+      _ <- Either.cond(canMoveAreas.contains(to), (), MoveKomaError.KomahaSonobashoniIdouDekinai)
+    } yield {
+      val (nextSenteKomadai, nextGoteKomadai) = (toKomaOpt, player) match {
+        case (None, _)             => (senteKomadai, goteKomadai)
+        case (Some(toKoma), Sente) => (senteKomadai.add(toKoma), goteKomadai)
+        case (Some(toKoma), Gote)  => (senteKomadai, goteKomadai.add(toKoma))
+      }
+      val nextMasus = Masu.replaceMasu(Masu.replaceMasu(masus, from, None), to, Some(fromKoma.owned(player)))
+      Board(nextMasus, nextSenteKomadai, nextGoteKomadai)
+    }
+  }
 
 }
 object Board {
+
   def factory: Board = Board(
-    a1 = Masu(A1, Some(Kirin(Gote))),
-    a2 = Masu(A2, None),
-    a3 = Masu(A3, None),
-    a4 = Masu(A4, Some(Zou(Sente))),
-    b1 = Masu(B1, Some(Lion(Gote))),
-    b2 = Masu(B2, Some(Hiyoko(Gote))),
-    b3 = Masu(B3, Some(Hiyoko(Sente))),
-    b4 = Masu(B4, Some(Lion(Sente))),
-    c1 = Masu(C1, Some(Zou(Gote))),
-    c2 = Masu(C2, None),
-    c3 = Masu(C3, None),
-    c4 = Masu(C4, Some(Kirin(Sente))),
+    masus = Set(
+      Masu(A1, Some(Kirin(Gote))),
+      Masu(A2, None),
+      Masu(A3, None),
+      Masu(A4, Some(Zou(Sente))),
+      Masu(B1, Some(Lion(Gote))),
+      Masu(B2, Some(Hiyoko(Gote))),
+      Masu(B3, Some(Hiyoko(Sente))),
+      Masu(B4, Some(Lion(Sente))),
+      Masu(C1, Some(Zou(Gote))),
+      Masu(C2, None),
+      Masu(C3, None),
+      Masu(C4, Some(Kirin(Sente)))
+    ),
     senteKomadai = Komadai(Sente, Seq.empty),
     goteKomadai = Komadai(Gote, Seq.empty)
   )
 
   private def validateKomaCount(board: Board): Unit = {
-    val komas: Seq[Koma] = Seq(
-      board.a1.maybeKoma,
-      board.a2.maybeKoma,
-      board.a3.maybeKoma,
-      board.a4.maybeKoma,
-      board.b1.maybeKoma,
-      board.b2.maybeKoma,
-      board.b3.maybeKoma,
-      board.b4.maybeKoma,
-      board.c1.maybeKoma,
-      board.c2.maybeKoma,
-      board.c3.maybeKoma,
-      board.c4.maybeKoma
-    ).flatten ++ board.senteKomadai.komas ++ board.goteKomadai.komas
+    val komas: Seq[Koma] =
+      board.masus.flatMap(_.maybeKoma).toSeq ++ board.senteKomadai.komas ++ board.goteKomadai.komas
 
     val lionCount     = komas.collect { case lion: Lion         => lion }.length
     val kirinCount    = komas.collect { case kirin: Kirin       => kirin }.length
@@ -72,4 +82,18 @@ object Board {
     assert(zouCount == 2)
     assert(hiyokoCount + niwatoriCount == 2)
   }
+
+  private def validateDuplicateMasu(board: Board): Unit = {
+    assert(board.masus.size == 12)
+    assert(board.masus.toList.map(_.area).distinct.length == 12)
+  }
+
+  sealed trait MoveKomaError
+  object MoveKomaError {
+    object FromKomaNotFound               extends MoveKomaError
+    object FromKomaIsNotOwnedByThatPlayer extends MoveKomaError
+    object IdousakiniJibunnoKomagaAru     extends MoveKomaError
+    object KomahaSonobashoniIdouDekinai   extends MoveKomaError
+  }
+
 }

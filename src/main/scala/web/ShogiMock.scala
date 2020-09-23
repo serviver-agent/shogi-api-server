@@ -50,11 +50,22 @@ class ShogiMock {
       )
     }
 
-    val masuEncoder: Encoder[Masu[_]] = Encoder.instance { masu =>
-      masu.maybeKoma match {
+    val areaEncoder: Encoder[Area] = Encoder.instance { area =>
+      Json.obj(
+        "x" -> Json.fromInt(area.x),
+        "y" -> Json.fromInt(area.y)
+      )
+    }
+
+    val masuEncoder: Encoder[Masu] = Encoder.instance { masu =>
+      val koma = masu.maybeKoma match {
         case None       => Json.Null
         case Some(koma) => komaEncoder(koma)
       }
+      Json.obj(
+        "area" -> areaEncoder(masu.area),
+        "koma" -> koma
+      )
     }
 
     val komadaiEncoder: Encoder[Komadai[_]] = Encoder.instance { komadai =>
@@ -63,18 +74,7 @@ class ShogiMock {
 
     val boardEncoder: Encoder[Board] = Encoder.instance { board =>
       Json.obj(
-        "a1"           -> masuEncoder(board.a1),
-        "a2"           -> masuEncoder(board.a2),
-        "a3"           -> masuEncoder(board.a3),
-        "a4"           -> masuEncoder(board.a4),
-        "b1"           -> masuEncoder(board.b1),
-        "b2"           -> masuEncoder(board.b2),
-        "b3"           -> masuEncoder(board.b3),
-        "b4"           -> masuEncoder(board.b4),
-        "c1"           -> masuEncoder(board.c1),
-        "c2"           -> masuEncoder(board.c2),
-        "c3"           -> masuEncoder(board.c3),
-        "c4"           -> masuEncoder(board.c4),
+        "masus"        -> Encoder.encodeList(masuEncoder)(board.masus.toList),
         "senteKomadai" -> komadaiEncoder(board.senteKomadai),
         "goteKomadai"  -> komadaiEncoder(board.goteKomadai)
       )
