@@ -470,4 +470,48 @@ class BoardSpec extends AnyFlatSpec with Matchers {
     assert(moved == expected)
   }
 
+  it should "相手のにわとりを取ったら手駒のひよこにする" in {
+    val board = Board(
+      masus = Set(
+        Masu(A1, Some(PlayersKoma(Kirin, Gote))),
+        Masu(A2, Some(PlayersKoma(Lion, Gote))),
+        Masu(A3, None),
+        Masu(A4, Some(PlayersKoma(Zou, Sente))),
+        Masu(B1, Some(PlayersKoma(Niwatori, Sente))),
+        Masu(B2, None),
+        Masu(B3, None),
+        Masu(B4, Some(PlayersKoma(Lion, Sente))),
+        Masu(C1, Some(PlayersKoma(Zou, Gote))),
+        Masu(C2, None),
+        Masu(C3, None),
+        Masu(C4, Some(PlayersKoma(Kirin, Sente)))
+      ),
+      senteKomadai = Komadai(Sente, Seq(Hiyoko)),
+      goteKomadai = Komadai(Gote, Seq.empty)
+    )
+    val moved = board.moveKoma(MoveKomaRequest.Ugokasu(A2, B1, Gote, false))
+    val expected = Right(
+      Board(
+        masus = Set(
+          Masu(A1, Some(PlayersKoma(Kirin, Gote))),
+          Masu(A2, None),
+          Masu(A3, None),
+          Masu(A4, Some(PlayersKoma(Zou, Sente))),
+          Masu(B1, Some(PlayersKoma(Lion, Gote))),
+          Masu(B2, None),
+          Masu(B3, None),
+          Masu(B4, Some(PlayersKoma(Lion, Sente))),
+          Masu(C1, Some(PlayersKoma(Zou, Gote))),
+          Masu(C2, None),
+          Masu(C3, None),
+          Masu(C4, Some(PlayersKoma(Kirin, Sente)))
+        ),
+        senteKomadai = Komadai(Sente, Seq(Hiyoko)),
+        goteKomadai = Komadai(Gote, Seq(Hiyoko))
+      )
+    )
+
+    moved shouldEqual expected
+  }
+
 }

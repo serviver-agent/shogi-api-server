@@ -55,8 +55,8 @@ case class Board(
     } yield {
       val (nextSenteKomadai, nextGoteKomadai) = (toMasu.upon.map(_.koma), player) match {
         case (None, _)             => (senteKomadai, goteKomadai)
-        case (Some(toKoma), Sente) => (senteKomadai.add(toKoma), goteKomadai)
-        case (Some(toKoma), Gote)  => (senteKomadai, goteKomadai.add(toKoma))
+        case (Some(toKoma), Sente) => (senteKomadai.add(toKoma.nariModori), goteKomadai)
+        case (Some(toKoma), Gote)  => (senteKomadai, goteKomadai.add(toKoma.nariModori))
       }
       val nextMasus = Masu.replaceMasu(Masu.replaceMasu(masus, from, None), to, Some(nextKoma.owned(player)))
       Board(nextMasus, nextSenteKomadai, nextGoteKomadai)
