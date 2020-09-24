@@ -13,18 +13,18 @@ class BoardSpec extends AnyFlatSpec with Matchers {
     val actual = Board.factory
     val expected = Board(
       masus = Set(
-        Masu(A1, Some(Kirin(Gote))),
+        Masu(A1, Some(PlayersKoma(Kirin, Gote))),
         Masu(A2, None),
         Masu(A3, None),
-        Masu(A4, Some(Zou(Sente))),
-        Masu(B1, Some(Lion(Gote))),
-        Masu(B2, Some(Hiyoko(Gote))),
-        Masu(B3, Some(Hiyoko(Sente))),
-        Masu(B4, Some(Lion(Sente))),
-        Masu(C1, Some(Zou(Gote))),
+        Masu(A4, Some(PlayersKoma(Zou, Sente))),
+        Masu(B1, Some(PlayersKoma(Lion, Gote))),
+        Masu(B2, Some(PlayersKoma(Hiyoko, Gote))),
+        Masu(B3, Some(PlayersKoma(Hiyoko, Sente))),
+        Masu(B4, Some(PlayersKoma(Lion, Sente))),
+        Masu(C1, Some(PlayersKoma(Zou, Gote))),
         Masu(C2, None),
         Masu(C3, None),
-        Masu(C4, Some(Kirin(Sente)))
+        Masu(C4, Some(PlayersKoma(Kirin, Sente)))
       ),
       senteKomadai = Komadai(Sente, Seq.empty),
       goteKomadai = Komadai(Gote, Seq.empty)
@@ -42,29 +42,19 @@ class BoardSpec extends AnyFlatSpec with Matchers {
           Masu(A1, None),
           Masu(A2, None),
           Masu(A3, None),
-          Masu(A4, Some(Zou(Sente))),
-          Masu(B1, Some(Lion(Gote))),
-          Masu(B2, Some(Hiyoko(Gote))),
-          Masu(B3, Some(Hiyoko(Sente))),
-          Masu(B4, Some(Lion(Sente))),
-          Masu(C1, Some(Zou(Gote))),
+          Masu(A4, Some(PlayersKoma(Zou, Sente))),
+          Masu(B1, Some(PlayersKoma(Lion, Gote))),
+          Masu(B2, Some(PlayersKoma(Hiyoko, Gote))),
+          Masu(B3, Some(PlayersKoma(Hiyoko, Sente))),
+          Masu(B4, Some(PlayersKoma(Lion, Sente))),
+          Masu(C1, Some(PlayersKoma(Zou, Gote))),
           Masu(C2, None),
           Masu(C3, None),
-          Masu(C4, Some(Kirin(Sente)))
+          Masu(C4, Some(PlayersKoma(Kirin, Sente)))
         ),
         senteKomadai = Komadai(
           Sente,
-          Seq(
-            Kirin(Sente),
-            Kirin(Sente),
-            Zou(Sente),
-            Zou(Sente),
-            Lion(Sente),
-            Lion(Sente),
-            Hiyoko(Sente),
-            Hiyoko(Sente),
-            Hiyoko(Sente)
-          )
+          Seq(Kirin, Kirin, Zou, Zou, Lion, Lion, Hiyoko, Hiyoko, Hiyoko)
         ),
         goteKomadai = Komadai(Gote, Seq.empty)
       )
@@ -78,19 +68,19 @@ class BoardSpec extends AnyFlatSpec with Matchers {
           Masu(A1, None),
           Masu(A2, None),
           Masu(A3, None),
-          Masu(A4, Some(Zou(Sente))),
-          Masu(B1, Some(Lion(Gote))),
-          Masu(B2, Some(Hiyoko(Gote))),
-          Masu(B3, Some(Hiyoko(Sente))),
-          Masu(B4, Some(Lion(Sente))),
-          Masu(C1, Some(Zou(Gote))),
+          Masu(A4, Some(PlayersKoma(Zou, Sente))),
+          Masu(B1, Some(PlayersKoma(Lion, Gote))),
+          Masu(B2, Some(PlayersKoma(Hiyoko, Gote))),
+          Masu(B3, Some(PlayersKoma(Hiyoko, Sente))),
+          Masu(B4, Some(PlayersKoma(Lion, Sente))),
+          Masu(C1, Some(PlayersKoma(Zou, Gote))),
           Masu(C2, None),
           Masu(C3, None),
-          Masu(C4, Some(Kirin(Sente)))
+          Masu(C4, Some(PlayersKoma(Kirin, Sente)))
         ),
         senteKomadai = Komadai(
           Sente,
-          Seq(Kirin(Sente), Kirin(Sente), Zou(Sente), Zou(Sente), Lion(Sente), Lion(Sente), Hiyoko(Sente))
+          Seq(Kirin, Kirin, Zou, Zou, Lion, Lion, Hiyoko)
         ),
         goteKomadai = Komadai(Gote, Seq.empty)
       )
@@ -103,19 +93,19 @@ class BoardSpec extends AnyFlatSpec with Matchers {
     assertThrows[AssertionError] {
       Board(
         masus = Set(
-          Masu(A1, Some(Kirin(Gote))),
+          Masu(A1, Some(PlayersKoma(Kirin, Gote))),
           Masu(A1, None), // !!
           Masu(A2, None),
           Masu(A3, None),
-          Masu(A4, Some(Zou(Sente))),
-          Masu(B1, Some(Lion(Gote))),
-          Masu(B2, Some(Hiyoko(Gote))),
-          Masu(B3, Some(Hiyoko(Sente))),
-          Masu(B4, Some(Lion(Sente))),
-          Masu(C1, Some(Zou(Gote))),
+          Masu(A4, Some(PlayersKoma(Zou, Sente))),
+          Masu(B1, Some(PlayersKoma(Lion, Gote))),
+          Masu(B2, Some(PlayersKoma(Hiyoko, Gote))),
+          Masu(B3, Some(PlayersKoma(Hiyoko, Sente))),
+          Masu(B4, Some(PlayersKoma(Lion, Sente))),
+          Masu(C1, Some(PlayersKoma(Zou, Gote))),
           Masu(C2, None),
           Masu(C3, None),
-          Masu(C4, Some(Kirin(Sente)))
+          Masu(C4, Some(PlayersKoma(Kirin, Sente)))
         ),
         senteKomadai = Komadai(Sente, Seq.empty),
         goteKomadai = Komadai(Gote, Seq.empty)
@@ -127,18 +117,18 @@ class BoardSpec extends AnyFlatSpec with Matchers {
     assertThrows[AssertionError] {
       Board(
         masus = Set(
-          Masu(A1, Some(Kirin(Gote))),
+          Masu(A1, Some(PlayersKoma(Kirin, Gote))),
           // !!
           Masu(A3, None),
-          Masu(A4, Some(Zou(Sente))),
-          Masu(B1, Some(Lion(Gote))),
-          Masu(B2, Some(Hiyoko(Gote))),
-          Masu(B3, Some(Hiyoko(Sente))),
-          Masu(B4, Some(Lion(Sente))),
-          Masu(C1, Some(Zou(Gote))),
+          Masu(A4, Some(PlayersKoma(Zou, Sente))),
+          Masu(B1, Some(PlayersKoma(Lion, Gote))),
+          Masu(B2, Some(PlayersKoma(Hiyoko, Gote))),
+          Masu(B3, Some(PlayersKoma(Hiyoko, Sente))),
+          Masu(B4, Some(PlayersKoma(Lion, Sente))),
+          Masu(C1, Some(PlayersKoma(Zou, Gote))),
           Masu(C2, None),
           Masu(C3, None),
-          Masu(C4, Some(Kirin(Sente)))
+          Masu(C4, Some(PlayersKoma(Kirin, Sente)))
         ),
         senteKomadai = Komadai(Sente, Seq.empty),
         goteKomadai = Komadai(Gote, Seq.empty)
@@ -154,20 +144,20 @@ class BoardSpec extends AnyFlatSpec with Matchers {
     val expected = Right(
       Board(
         masus = Set(
-          Masu(A1, Some(Kirin(Gote))),
+          Masu(A1, Some(PlayersKoma(Kirin, Gote))),
           Masu(A2, None),
           Masu(A3, None),
-          Masu(A4, Some(Zou(Sente))),
-          Masu(B1, Some(Lion(Gote))),
-          Masu(B2, Some(Hiyoko(Sente))), // !!
-          Masu(B3, None),                // !!
-          Masu(B4, Some(Lion(Sente))),
-          Masu(C1, Some(Zou(Gote))),
+          Masu(A4, Some(PlayersKoma(Zou, Sente))),
+          Masu(B1, Some(PlayersKoma(Lion, Gote))),
+          Masu(B2, Some(PlayersKoma(Hiyoko, Sente))), // !!
+          Masu(B3, None),                             // !!
+          Masu(B4, Some(PlayersKoma(Lion, Sente))),
+          Masu(C1, Some(PlayersKoma(Zou, Gote))),
           Masu(C2, None),
           Masu(C3, None),
-          Masu(C4, Some(Kirin(Sente)))
+          Masu(C4, Some(PlayersKoma(Kirin, Sente)))
         ),
-        senteKomadai = Komadai(Sente, Seq(Hiyoko(Gote))),
+        senteKomadai = Komadai(Sente, Seq(Hiyoko)),
         goteKomadai = Komadai(Gote, Seq.empty)
       )
     )
@@ -180,21 +170,21 @@ class BoardSpec extends AnyFlatSpec with Matchers {
     val expected = Right(
       Board(
         masus = Set(
-          Masu(A1, Some(Kirin(Gote))),
+          Masu(A1, Some(PlayersKoma(Kirin, Gote))),
           Masu(A2, None),
           Masu(A3, None),
-          Masu(A4, Some(Zou(Sente))),
-          Masu(B1, Some(Lion(Gote))),
+          Masu(A4, Some(PlayersKoma(Zou, Sente))),
+          Masu(B1, Some(PlayersKoma(Lion, Gote))),
           Masu(B2, None),
-          Masu(B3, Some(Hiyoko(Gote))),
-          Masu(B4, Some(Lion(Sente))),
-          Masu(C1, Some(Zou(Gote))),
+          Masu(B3, Some(PlayersKoma(Hiyoko, Gote))),
+          Masu(B4, Some(PlayersKoma(Lion, Sente))),
+          Masu(C1, Some(PlayersKoma(Zou, Gote))),
           Masu(C2, None),
           Masu(C3, None),
-          Masu(C4, Some(Kirin(Sente)))
+          Masu(C4, Some(PlayersKoma(Kirin, Sente)))
         ),
         senteKomadai = Komadai(Sente, Seq.empty),
-        goteKomadai = Komadai(Gote, Seq(Hiyoko(Sente)))
+        goteKomadai = Komadai(Gote, Seq(Hiyoko))
       )
     )
     assert(moved == expected)
@@ -226,41 +216,41 @@ class BoardSpec extends AnyFlatSpec with Matchers {
   it should "駒台から駒を打てる(先手)" in {
     val init = Board(
       masus = Set(
-        Masu(A1, Some(Kirin(Gote))),
+        Masu(A1, Some(PlayersKoma(Kirin, Gote))),
         Masu(A2, None),
         Masu(A3, None),
-        Masu(A4, Some(Zou(Sente))),
-        Masu(B1, Some(Lion(Gote))),
-        Masu(B2, Some(Zou(Gote))),
+        Masu(A4, Some(PlayersKoma(Zou, Sente))),
+        Masu(B1, Some(PlayersKoma(Lion, Gote))),
+        Masu(B2, Some(PlayersKoma(Zou, Gote))),
         Masu(B3, None),
-        Masu(B4, Some(Lion(Sente))),
-        Masu(C1, Some(Zou(Gote))),
+        Masu(B4, Some(PlayersKoma(Lion, Sente))),
+        Masu(C1, None),
         Masu(C2, None),
         Masu(C3, None),
-        Masu(C4, Some(Kirin(Sente)))
+        Masu(C4, Some(PlayersKoma(Kirin, Sente)))
       ),
-      senteKomadai = Komadai(Sente, Seq(Hiyoko(Gote))),
-      goteKomadai = Komadai(Gote, Seq(Hiyoko(Sente)))
+      senteKomadai = Komadai(Sente, Seq(Hiyoko)),
+      goteKomadai = Komadai(Gote, Seq(Hiyoko))
     )
-    val moved = init.moveKoma(MoveKomaRequest.FromKomadai(Hiyoko(Sente), B3, Sente))
+    val moved = init.moveKoma(MoveKomaRequest.FromKomadai(Hiyoko, B3, Sente))
     val expected = Right(
       Board(
         masus = Set(
-          Masu(A1, Some(Kirin(Gote))),
+          Masu(A1, Some(PlayersKoma(Kirin, Gote))),
           Masu(A2, None),
           Masu(A3, None),
-          Masu(A4, Some(Zou(Sente))),
-          Masu(B1, Some(Lion(Gote))),
-          Masu(B2, Some(Zou(Gote))),
-          Masu(B3, Some(Hiyoko(Sente))),
-          Masu(B4, Some(Lion(Sente))),
-          Masu(C1, Some(Zou(Gote))),
+          Masu(A4, Some(PlayersKoma(Zou, Sente))),
+          Masu(B1, Some(PlayersKoma(Lion, Gote))),
+          Masu(B2, Some(PlayersKoma(Zou, Gote))),
+          Masu(B3, Some(PlayersKoma(Hiyoko, Sente))),
+          Masu(B4, Some(PlayersKoma(Lion, Sente))),
+          Masu(C1, None),
           Masu(C2, None),
           Masu(C3, None),
-          Masu(C4, Some(Kirin(Sente)))
+          Masu(C4, Some(PlayersKoma(Kirin, Sente)))
         ),
         senteKomadai = Komadai(Sente, Seq.empty),
-        goteKomadai = Komadai(Gote, Seq(Hiyoko(Sente)))
+        goteKomadai = Komadai(Gote, Seq(Hiyoko))
       )
     )
     assert(moved == expected)
@@ -269,38 +259,38 @@ class BoardSpec extends AnyFlatSpec with Matchers {
   it should "駒台から駒を打てる(後手)" in {
     val init = Board(
       masus = Set(
-        Masu(A1, Some(Kirin(Gote))),
+        Masu(A1, Some(PlayersKoma(Kirin, Gote))),
         Masu(A2, None),
         Masu(A3, None),
-        Masu(A4, Some(Zou(Sente))),
-        Masu(B1, Some(Lion(Gote))),
-        Masu(B2, Some(Zou(Gote))),
-        Masu(B3, Some(Hiyoko(Sente))),
-        Masu(B4, Some(Lion(Sente))),
-        Masu(C1, Some(Zou(Gote))),
+        Masu(A4, Some(PlayersKoma(Zou, Sente))),
+        Masu(B1, Some(PlayersKoma(Lion, Gote))),
+        Masu(B2, Some(PlayersKoma(Zou, Gote))),
+        Masu(B3, Some(PlayersKoma(Hiyoko, Sente))),
+        Masu(B4, Some(PlayersKoma(Lion, Sente))),
+        Masu(C1, None),
         Masu(C2, None),
         Masu(C3, None),
-        Masu(C4, Some(Kirin(Sente)))
+        Masu(C4, Some(PlayersKoma(Kirin, Sente)))
       ),
       senteKomadai = Komadai(Sente, Seq.empty),
-      goteKomadai = Komadai(Gote, Seq(Hiyoko(Sente)))
+      goteKomadai = Komadai(Gote, Seq(Hiyoko))
     )
-    val moved = init.moveKoma(MoveKomaRequest.FromKomadai(Hiyoko(Sente), A3, Gote))
+    val moved = init.moveKoma(MoveKomaRequest.FromKomadai(Hiyoko, A3, Gote))
     val expected = Right(
       Board(
         masus = Set(
-          Masu(A1, Some(Kirin(Gote))),
+          Masu(A1, Some(PlayersKoma(Kirin, Gote))),
           Masu(A2, None),
-          Masu(A3, Some(Hiyoko(Gote))),
-          Masu(A4, Some(Zou(Sente))),
-          Masu(B1, Some(Lion(Gote))),
-          Masu(B2, Some(Zou(Gote))),
-          Masu(B3, Some(Hiyoko(Sente))),
-          Masu(B4, Some(Lion(Sente))),
-          Masu(C1, Some(Zou(Gote))),
+          Masu(A3, Some(PlayersKoma(Hiyoko, Gote))),
+          Masu(A4, Some(PlayersKoma(Zou, Sente))),
+          Masu(B1, Some(PlayersKoma(Lion, Gote))),
+          Masu(B2, Some(PlayersKoma(Zou, Gote))),
+          Masu(B3, Some(PlayersKoma(Hiyoko, Sente))),
+          Masu(B4, Some(PlayersKoma(Lion, Sente))),
+          Masu(C1, None),
           Masu(C2, None),
           Masu(C3, None),
-          Masu(C4, Some(Kirin(Sente)))
+          Masu(C4, Some(PlayersKoma(Kirin, Sente)))
         ),
         senteKomadai = Komadai(Sente, Seq.empty),
         goteKomadai = Komadai(Gote, Seq.empty)
@@ -312,23 +302,23 @@ class BoardSpec extends AnyFlatSpec with Matchers {
   it should "駒台に駒が無い時は駒を打てない" in {
     val init = Board(
       masus = Set(
-        Masu(A1, Some(Kirin(Gote))),
+        Masu(A1, Some(PlayersKoma(Kirin, Gote))),
         Masu(A2, None),
         Masu(A3, None),
-        Masu(A4, Some(Zou(Sente))),
-        Masu(B1, Some(Lion(Gote))),
-        Masu(B2, Some(Zou(Gote))),
+        Masu(A4, Some(PlayersKoma(Zou, Sente))),
+        Masu(B1, Some(PlayersKoma(Lion, Gote))),
+        Masu(B2, Some(PlayersKoma(Zou, Gote))),
         Masu(B3, None),
-        Masu(B4, Some(Lion(Sente))),
-        Masu(C1, Some(Zou(Gote))),
+        Masu(B4, Some(PlayersKoma(Lion, Sente))),
+        Masu(C1, None),
         Masu(C2, None),
         Masu(C3, None),
-        Masu(C4, Some(Kirin(Sente)))
+        Masu(C4, Some(PlayersKoma(Kirin, Sente)))
       ),
-      senteKomadai = Komadai(Sente, Seq(Hiyoko(Gote))),
-      goteKomadai = Komadai(Gote, Seq(Hiyoko(Sente)))
+      senteKomadai = Komadai(Sente, Seq(Hiyoko)),
+      goteKomadai = Komadai(Gote, Seq(Hiyoko))
     )
-    val moved    = init.moveKoma(MoveKomaRequest.FromKomadai(Zou(Sente), B3, Sente))
+    val moved    = init.moveKoma(MoveKomaRequest.FromKomadai(Zou, B3, Sente))
     val expected = Left(MoveKomaError.KomadaiNiKomagaNai)
     assert(moved == expected)
   }
@@ -336,23 +326,23 @@ class BoardSpec extends AnyFlatSpec with Matchers {
   it should "駒台から打とうとしたところに駒があると駒を打てない" in {
     val init = Board(
       masus = Set(
-        Masu(A1, Some(Kirin(Gote))),
+        Masu(A1, Some(PlayersKoma(Kirin, Gote))),
         Masu(A2, None),
         Masu(A3, None),
-        Masu(A4, Some(Zou(Sente))),
-        Masu(B1, Some(Lion(Gote))),
-        Masu(B2, Some(Zou(Gote))),
+        Masu(A4, Some(PlayersKoma(Zou, Sente))),
+        Masu(B1, Some(PlayersKoma(Lion, Gote))),
+        Masu(B2, Some(PlayersKoma(Zou, Gote))),
         Masu(B3, None),
-        Masu(B4, Some(Lion(Sente))),
-        Masu(C1, Some(Zou(Gote))),
+        Masu(B4, Some(PlayersKoma(Lion, Sente))),
+        Masu(C1, None),
         Masu(C2, None),
         Masu(C3, None),
-        Masu(C4, Some(Kirin(Sente)))
+        Masu(C4, Some(PlayersKoma(Kirin, Sente)))
       ),
-      senteKomadai = Komadai(Sente, Seq(Hiyoko(Gote))),
-      goteKomadai = Komadai(Gote, Seq(Hiyoko(Sente)))
+      senteKomadai = Komadai(Sente, Seq(Hiyoko)),
+      goteKomadai = Komadai(Gote, Seq(Hiyoko))
     )
-    val moved    = init.moveKoma(MoveKomaRequest.FromKomadai(Hiyoko(Sente), A1, Gote))
+    val moved    = init.moveKoma(MoveKomaRequest.FromKomadai(Hiyoko, A1, Gote))
     val expected = Left(MoveKomaError.UtoutoSitatokoniKomagaAru)
     assert(moved == expected)
   }
@@ -362,18 +352,18 @@ class BoardSpec extends AnyFlatSpec with Matchers {
   it should "ひよこは一番奥の列で成ることができる(先手)" in {
     val board = Board(
       masus = Set(
-        Masu(A1, Some(Kirin(Gote))),
+        Masu(A1, Some(PlayersKoma(Kirin, Gote))),
         Masu(A2, None),
         Masu(A3, None),
-        Masu(A4, Some(Zou(Sente))),
-        Masu(B1, Some(Lion(Gote))),
-        Masu(B2, Some(Hiyoko(Gote))),
+        Masu(A4, Some(PlayersKoma(Zou, Sente))),
+        Masu(B1, Some(PlayersKoma(Lion, Gote))),
+        Masu(B2, Some(PlayersKoma(Hiyoko, Gote))),
         Masu(B3, None),
-        Masu(B4, Some(Lion(Sente))),
-        Masu(C1, Some(Zou(Gote))),
-        Masu(C2, Some(Hiyoko(Sente))),
+        Masu(B4, Some(PlayersKoma(Lion, Sente))),
+        Masu(C1, Some(PlayersKoma(Zou, Gote))),
+        Masu(C2, Some(PlayersKoma(Hiyoko, Sente))),
         Masu(C3, None),
-        Masu(C4, Some(Kirin(Sente)))
+        Masu(C4, Some(PlayersKoma(Kirin, Sente)))
       ),
       senteKomadai = Komadai(Sente, Seq.empty),
       goteKomadai = Komadai(Gote, Seq.empty)
@@ -382,20 +372,20 @@ class BoardSpec extends AnyFlatSpec with Matchers {
     val expected = Right(
       Board(
         masus = Set(
-          Masu(A1, Some(Kirin(Gote))),
+          Masu(A1, Some(PlayersKoma(Kirin, Gote))),
           Masu(A2, None),
           Masu(A3, None),
-          Masu(A4, Some(Zou(Sente))),
-          Masu(B1, Some(Lion(Gote))),
-          Masu(B2, Some(Hiyoko(Gote))),
+          Masu(A4, Some(PlayersKoma(Zou, Sente))),
+          Masu(B1, Some(PlayersKoma(Lion, Gote))),
+          Masu(B2, Some(PlayersKoma(Hiyoko, Gote))),
           Masu(B3, None),
-          Masu(B4, Some(Lion(Sente))),
-          Masu(C1, Some(Niwatori(Sente))),
+          Masu(B4, Some(PlayersKoma(Lion, Sente))),
+          Masu(C1, Some(PlayersKoma(Niwatori, Sente))),
           Masu(C2, None),
           Masu(C3, None),
-          Masu(C4, Some(Kirin(Sente)))
+          Masu(C4, Some(PlayersKoma(Kirin, Sente)))
         ),
-        senteKomadai = Komadai(Sente, Seq(Zou(Gote))),
+        senteKomadai = Komadai(Sente, Seq(Zou)),
         goteKomadai = Komadai(Gote, Seq.empty)
       )
     )
@@ -406,18 +396,18 @@ class BoardSpec extends AnyFlatSpec with Matchers {
   it should "ひよこは一番手前の列で成ることができる(後手)" in {
     val board = Board(
       masus = Set(
-        Masu(A1, Some(Kirin(Gote))),
+        Masu(A1, Some(PlayersKoma(Kirin, Gote))),
         Masu(A2, None),
         Masu(A3, None),
-        Masu(A4, Some(Zou(Sente))),
-        Masu(B1, Some(Lion(Gote))),
+        Masu(A4, Some(PlayersKoma(Zou, Sente))),
+        Masu(B1, Some(PlayersKoma(Lion, Gote))),
         Masu(B2, None),
         Masu(B3, None),
-        Masu(B4, Some(Lion(Sente))),
-        Masu(C1, Some(Zou(Gote))),
-        Masu(C2, Some(Hiyoko(Sente))),
-        Masu(C3, Some(Hiyoko(Gote))),
-        Masu(C4, Some(Kirin(Sente)))
+        Masu(B4, Some(PlayersKoma(Lion, Sente))),
+        Masu(C1, Some(PlayersKoma(Zou, Gote))),
+        Masu(C2, Some(PlayersKoma(Hiyoko, Sente))),
+        Masu(C3, Some(PlayersKoma(Hiyoko, Gote))),
+        Masu(C4, Some(PlayersKoma(Kirin, Sente)))
       ),
       senteKomadai = Komadai(Sente, Seq.empty),
       goteKomadai = Komadai(Gote, Seq.empty)
@@ -426,21 +416,21 @@ class BoardSpec extends AnyFlatSpec with Matchers {
     val expected = Right(
       Board(
         masus = Set(
-          Masu(A1, Some(Kirin(Gote))),
+          Masu(A1, Some(PlayersKoma(Kirin, Gote))),
           Masu(A2, None),
           Masu(A3, None),
-          Masu(A4, Some(Zou(Sente))),
-          Masu(B1, Some(Lion(Gote))),
+          Masu(A4, Some(PlayersKoma(Zou, Sente))),
+          Masu(B1, Some(PlayersKoma(Lion, Gote))),
           Masu(B2, None),
           Masu(B3, None),
-          Masu(B4, Some(Lion(Sente))),
-          Masu(C1, Some(Zou(Gote))),
-          Masu(C2, Some(Hiyoko(Sente))),
+          Masu(B4, Some(PlayersKoma(Lion, Sente))),
+          Masu(C1, Some(PlayersKoma(Zou, Gote))),
+          Masu(C2, Some(PlayersKoma(Hiyoko, Sente))),
           Masu(C3, None),
-          Masu(C4, Some(Niwatori(Gote)))
+          Masu(C4, Some(PlayersKoma(Niwatori, Gote)))
         ),
         senteKomadai = Komadai(Sente, Seq.empty),
-        goteKomadai = Komadai(Gote, Seq(Kirin(Sente)))
+        goteKomadai = Komadai(Gote, Seq(Kirin))
       )
     )
 
@@ -450,18 +440,18 @@ class BoardSpec extends AnyFlatSpec with Matchers {
   it should "成れない駒は成ることができない" in {
     val board = Board(
       masus = Set(
-        Masu(A1, Some(Kirin(Gote))),
+        Masu(A1, Some(PlayersKoma(Kirin, Gote))),
         Masu(A2, None),
         Masu(A3, None),
-        Masu(A4, Some(Zou(Sente))),
-        Masu(B1, Some(Lion(Gote))),
-        Masu(B2, Some(Hiyoko(Gote))),
+        Masu(A4, Some(PlayersKoma(Zou, Sente))),
+        Masu(B1, Some(PlayersKoma(Lion, Gote))),
+        Masu(B2, Some(PlayersKoma(Hiyoko, Gote))),
         Masu(B3, None),
-        Masu(B4, Some(Lion(Sente))),
-        Masu(C1, Some(Zou(Gote))),
-        Masu(C2, Some(Hiyoko(Sente))),
+        Masu(B4, Some(PlayersKoma(Lion, Sente))),
+        Masu(C1, Some(PlayersKoma(Zou, Gote))),
+        Masu(C2, Some(PlayersKoma(Hiyoko, Sente))),
         Masu(C3, None),
-        Masu(C4, Some(Kirin(Sente)))
+        Masu(C4, Some(PlayersKoma(Kirin, Sente)))
       ),
       senteKomadai = Komadai(Sente, Seq.empty),
       goteKomadai = Komadai(Gote, Seq.empty)
