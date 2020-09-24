@@ -36,18 +36,12 @@ class ShogiMock {
       case Gote  => Json.fromString("Gote")
     }
 
-    val komaEncoder: Encoder[Koma] = Encoder.instance { koma =>
-      val tpe = koma match {
-        case Koma.Lion(_)     => "Lion"
-        case Koma.Kirin(_)    => "Kirin"
-        case Koma.Zou(_)      => "Zou"
-        case Koma.Hiyoko(_)   => "Hiyoko"
-        case Koma.Niwatori(_) => "Niwatori"
-      }
-      Json.obj(
-        "tpe"    -> Json.fromString(tpe),
-        "player" -> playerEncoder(koma.player)
-      )
+    val komaEncoder: Encoder[Koma] = Encoder.instance {
+      case Koma.Lion     => Json.fromString("Lion")
+      case Koma.Kirin    => Json.fromString("Kirin")
+      case Koma.Zou      => Json.fromString("Zou")
+      case Koma.Hiyoko   => Json.fromString("Hiyoko")
+      case Koma.Niwatori => Json.fromString("Niwatori")
     }
 
     val areaEncoder: Encoder[Area] = Encoder.instance { area =>
@@ -58,9 +52,13 @@ class ShogiMock {
     }
 
     val masuEncoder: Encoder[Masu] = Encoder.instance { masu =>
-      val koma = masu.maybeKoma match {
-        case None       => Json.Null
-        case Some(koma) => komaEncoder(koma)
+      val koma = masu.upon match {
+        case None => Json.Null
+        case Some(playersKoma) =>
+          Json.obj(
+            "player" -> playerEncoder(playersKoma.player),
+            "koma"   -> komaEncoder(playersKoma.koma)
+          )
       }
       Json.obj(
         "area" -> areaEncoder(masu.area),
