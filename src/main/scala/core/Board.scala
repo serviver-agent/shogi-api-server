@@ -27,7 +27,7 @@ case class Board(
     case Gote  => goteKomadai
   }
 
-  def moveKoma(request: MoveKomaRequest): Either[MoveKomaError, Board] = {
+  def next(request: MoveKomaRequest): Either[MoveKomaError, Board] = {
     request match {
       case Ugokasu(from, to, player, nari) => ugokasu(from, to, player, nari)
       case FromKomadai(koma, to, player)   => fromKomadai(koma, to, player)
@@ -77,6 +77,12 @@ case class Board(
     }
   }
 
+  def winnerOpt: Option[Player] = {
+    if (senteKomadai.komas.contains(Lion)) Some(Sente)
+    else if (goteKomadai.komas.contains(Lion)) Some(Gote)
+    else None
+  }
+
 }
 
 object Board {
@@ -115,7 +121,9 @@ object Board {
     assert(board.masus.toList.map(_.area).distinct.length == 12)
   }
 
-  sealed trait MoveKomaRequest
+  sealed trait MoveKomaRequest {
+    def player: Player
+  }
   object MoveKomaRequest {
     case class Ugokasu(from: Area, to: Area, player: Player, nari: Boolean) extends MoveKomaRequest
     case class FromKomadai(koma: Koma, to: Area, player: Player)            extends MoveKomaRequest
