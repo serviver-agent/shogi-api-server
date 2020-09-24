@@ -48,13 +48,18 @@ case class Board(
       )
       canMoveAreas = fromKoma.relativeArea(player).map(from.move).flatten
       _ <- Either.cond(canMoveAreas.contains(to), (), MoveKomaError.KomahaSonobashoniIdouDekinai)
+      nextKoma <- (nari, to.isNareru(player), fromKoma.nari) match {
+        case (true, true, Some(nattaKoma)) => Right(nattaKoma)
+        case (true, _, _)                  => Left(MoveKomaError.NarenaiNoniNaroutoSuru)
+        case _                             => Right(fromKoma)
+      }
     } yield {
       val (nextSenteKomadai, nextGoteKomadai) = (toKomaOpt, player) match {
         case (None, _)             => (senteKomadai, goteKomadai)
         case (Some(toKoma), Sente) => (senteKomadai.add(toKoma), goteKomadai)
         case (Some(toKoma), Gote)  => (senteKomadai, goteKomadai.add(toKoma))
       }
-      val nextMasus = Masu.replaceMasu(Masu.replaceMasu(masus, from, None), to, Some(fromKoma.owned(player)))
+      val nextMasus = Masu.replaceMasu(Masu.replaceMasu(masus, from, None), to, Some(nextKoma.owned(player)))
       Board(nextMasus, nextSenteKomadai, nextGoteKomadai)
     }
   }
@@ -132,6 +137,7 @@ object Board {
     case object KomahaSonobashoniIdouDekinai   extends MoveKomaError
     case object KomadaiNiKomagaNai             extends MoveKomaError
     case object UtoutoSitatokoniKomagaAru      extends MoveKomaError
+    case object NarenaiNoniNaroutoSuru         extends MoveKomaError
   }
 
 }
