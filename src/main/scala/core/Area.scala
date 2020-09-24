@@ -17,6 +17,13 @@ case class Area(val x: Int, val y: Int) {
     if (1 <= nextX && nextX <= 3 && 1 <= nextY && nextY <= 4) Some(Area(nextX, nextY))
     else None
   }
+
+  final def isNareru(player: Player): Boolean = {
+    player match {
+      case Sente => y == 1
+      case Gote  => y == 4
+    }
+  }
 }
 
 object Area {
