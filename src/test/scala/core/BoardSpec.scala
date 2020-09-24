@@ -2,7 +2,7 @@ package core
 
 import core.Area.{A1, A2, A3, A4, B1, B2, B3, B4, C1, C2, C3, C4}
 import core.Koma.{Hiyoko, Kirin, Lion, Zou}
-import core.Board.MoveKomaError
+import core.Board.{MoveKomaRequest, MoveKomaError}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import scala.language.implicitConversions
@@ -150,7 +150,7 @@ class BoardSpec extends AnyFlatSpec with Matchers {
 
   it should "コマを移動できる(先手)" in {
     val init  = Board.factory
-    val moved = init.moveKoma(B3, B2, Sente)
+    val moved = init.moveKoma(MoveKomaRequest.Ugokasu(B3, B2, Sente, false))
     val expected = Right(
       Board(
         masus = Set(
@@ -176,7 +176,7 @@ class BoardSpec extends AnyFlatSpec with Matchers {
 
   it should "コマを移動できる(後手)" in {
     val init  = Board.factory
-    val moved = init.moveKoma(B2, B3, Gote)
+    val moved = init.moveKoma(MoveKomaRequest.Ugokasu(B2, B3, Gote, false))
     val expected = Right(
       Board(
         masus = Set(
@@ -202,22 +202,158 @@ class BoardSpec extends AnyFlatSpec with Matchers {
 
   it should "存在しないコマは移動できない" in {
     val init     = Board.factory
-    val moved    = init.moveKoma(C2, B2, Sente)
+    val moved    = init.moveKoma(MoveKomaRequest.Ugokasu(C2, B2, Sente, false))
     val expected = Left(MoveKomaError.FromKomaNotFound)
     assert(moved == expected)
   }
 
   it should "相手のコマは移動できない" in {
     val init     = Board.factory
-    val moved    = init.moveKoma(B1 /* 相手のライオン */, B2, Sente)
+    val moved    = init.moveKoma(MoveKomaRequest.Ugokasu(B1 /* 相手のライオン */, B2, Sente, false))
     val expected = Left(MoveKomaError.FromKomaIsNotOwnedByThatPlayer)
     assert(moved == expected)
   }
 
   it should "コマはそのコマが移動できる場所にしか移動できない" in {
     val init     = Board.factory
-    val moved    = init.moveKoma(B3 /* ヒヨコ */, C3, Sente)
+    val moved    = init.moveKoma(MoveKomaRequest.Ugokasu(B3 /* ヒヨコ */, C3, Sente, false))
     val expected = Left(MoveKomaError.KomahaSonobashoniIdouDekinai)
+    assert(moved == expected)
+  }
+
+  /* 駒台から打つ */
+
+  it should "駒台から駒を打てる(先手)" in {
+    val init = Board(
+      masus = Set(
+        Masu(A1, Some(Kirin(Gote))),
+        Masu(A2, None),
+        Masu(A3, None),
+        Masu(A4, Some(Zou(Sente))),
+        Masu(B1, Some(Lion(Gote))),
+        Masu(B2, Some(Zou(Gote))),
+        Masu(B3, None),
+        Masu(B4, Some(Lion(Sente))),
+        Masu(C1, Some(Zou(Gote))),
+        Masu(C2, None),
+        Masu(C3, None),
+        Masu(C4, Some(Kirin(Sente)))
+      ),
+      senteKomadai = Komadai(Sente, Seq(Hiyoko(Gote))),
+      goteKomadai = Komadai(Gote, Seq(Hiyoko(Sente)))
+    )
+    val moved = init.moveKoma(MoveKomaRequest.FromKomadai(Hiyoko(Sente), B3, Sente))
+    val expected = Right(
+      Board(
+        masus = Set(
+          Masu(A1, Some(Kirin(Gote))),
+          Masu(A2, None),
+          Masu(A3, None),
+          Masu(A4, Some(Zou(Sente))),
+          Masu(B1, Some(Lion(Gote))),
+          Masu(B2, Some(Zou(Gote))),
+          Masu(B3, Some(Hiyoko(Sente))),
+          Masu(B4, Some(Lion(Sente))),
+          Masu(C1, Some(Zou(Gote))),
+          Masu(C2, None),
+          Masu(C3, None),
+          Masu(C4, Some(Kirin(Sente)))
+        ),
+        senteKomadai = Komadai(Sente, Seq.empty),
+        goteKomadai = Komadai(Gote, Seq(Hiyoko(Sente)))
+      )
+    )
+    assert(moved == expected)
+  }
+
+  it should "駒台から駒を打てる(後手)" in {
+    val init = Board(
+      masus = Set(
+        Masu(A1, Some(Kirin(Gote))),
+        Masu(A2, None),
+        Masu(A3, None),
+        Masu(A4, Some(Zou(Sente))),
+        Masu(B1, Some(Lion(Gote))),
+        Masu(B2, Some(Zou(Gote))),
+        Masu(B3, Some(Hiyoko(Sente))),
+        Masu(B4, Some(Lion(Sente))),
+        Masu(C1, Some(Zou(Gote))),
+        Masu(C2, None),
+        Masu(C3, None),
+        Masu(C4, Some(Kirin(Sente)))
+      ),
+      senteKomadai = Komadai(Sente, Seq.empty),
+      goteKomadai = Komadai(Gote, Seq(Hiyoko(Sente)))
+    )
+    val moved = init.moveKoma(MoveKomaRequest.FromKomadai(Hiyoko(Sente), A3, Gote))
+    val expected = Right(
+      Board(
+        masus = Set(
+          Masu(A1, Some(Kirin(Gote))),
+          Masu(A2, None),
+          Masu(A3, Some(Hiyoko(Gote))),
+          Masu(A4, Some(Zou(Sente))),
+          Masu(B1, Some(Lion(Gote))),
+          Masu(B2, Some(Zou(Gote))),
+          Masu(B3, Some(Hiyoko(Sente))),
+          Masu(B4, Some(Lion(Sente))),
+          Masu(C1, Some(Zou(Gote))),
+          Masu(C2, None),
+          Masu(C3, None),
+          Masu(C4, Some(Kirin(Sente)))
+        ),
+        senteKomadai = Komadai(Sente, Seq.empty),
+        goteKomadai = Komadai(Gote, Seq.empty)
+      )
+    )
+    assert(moved == expected)
+  }
+
+  it should "駒台に駒が無い時は駒を打てない" in {
+    val init = Board(
+      masus = Set(
+        Masu(A1, Some(Kirin(Gote))),
+        Masu(A2, None),
+        Masu(A3, None),
+        Masu(A4, Some(Zou(Sente))),
+        Masu(B1, Some(Lion(Gote))),
+        Masu(B2, Some(Zou(Gote))),
+        Masu(B3, None),
+        Masu(B4, Some(Lion(Sente))),
+        Masu(C1, Some(Zou(Gote))),
+        Masu(C2, None),
+        Masu(C3, None),
+        Masu(C4, Some(Kirin(Sente)))
+      ),
+      senteKomadai = Komadai(Sente, Seq(Hiyoko(Gote))),
+      goteKomadai = Komadai(Gote, Seq(Hiyoko(Sente)))
+    )
+    val moved    = init.moveKoma(MoveKomaRequest.FromKomadai(Zou(Sente), B3, Sente))
+    val expected = Left(MoveKomaError.KomadaiNiKomagaNai)
+    assert(moved == expected)
+  }
+
+  it should "駒台から打とうとしたところに駒があると駒を打てない" in {
+    val init = Board(
+      masus = Set(
+        Masu(A1, Some(Kirin(Gote))),
+        Masu(A2, None),
+        Masu(A3, None),
+        Masu(A4, Some(Zou(Sente))),
+        Masu(B1, Some(Lion(Gote))),
+        Masu(B2, Some(Zou(Gote))),
+        Masu(B3, None),
+        Masu(B4, Some(Lion(Sente))),
+        Masu(C1, Some(Zou(Gote))),
+        Masu(C2, None),
+        Masu(C3, None),
+        Masu(C4, Some(Kirin(Sente)))
+      ),
+      senteKomadai = Komadai(Sente, Seq(Hiyoko(Gote))),
+      goteKomadai = Komadai(Gote, Seq(Hiyoko(Sente)))
+    )
+    val moved    = init.moveKoma(MoveKomaRequest.FromKomadai(Hiyoko(Sente), A1, Gote))
+    val expected = Left(MoveKomaError.UtoutoSitatokoniKomagaAru)
     assert(moved == expected)
   }
 
