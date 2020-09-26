@@ -1,5 +1,7 @@
 package web
 
+import web.session.SessionsApi
+
 import akka.http.scaladsl.model.{HttpResponse, Uri, HttpRequest}
 import akka.stream.scaladsl.{Source, Flow, Sink}
 import akka.NotUsed
@@ -23,6 +25,8 @@ class Routes(webApp: WebApp) {
           case req @ HttpRequest(_, Uri.Path(path), _, _, _) if path.startsWith("/shogi") =>
             webApp.shogiApp.handleRequest
           case req @ HttpRequest(_, Uri.Path(path), _, _, _) if path.startsWith("/room") => webApp.roomApp.handleRequest
+          case req @ HttpRequest(_, Uri.Path(SessionsApi.SessionsApiUrlMatcher(_)), _, _, _) =>
+            webApp.sessionsApi.handleRequest
           case req @ _ => {
             r.discardEntityBytes()
             Flow.fromSinkAndSource(

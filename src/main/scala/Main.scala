@@ -1,4 +1,5 @@
 import web._
+import web.session._
 import akka.actor.typed.{ActorSystem, Behavior, Terminated}
 import akka.actor.typed.scaladsl.Behaviors
 import akka.NotUsed
@@ -8,10 +9,12 @@ object Main extends App {
 
   def apply(): Behavior[NotUsed] = {
     Behaviors.setup { context =>
-      val roomsActor = context.spawn(Rooms(), "rooms")
-      val roomApp    = new RoomApp(roomsActor)
-      val webApp     = new WebApp(roomApp, new ShogiMock)
-      val routes     = new Routes(webApp)
+      val roomsActor    = context.spawn(Rooms(), "rooms")
+      val roomApp       = new RoomApp(roomsActor)
+      val sessionsActor = context.spawn(Sessions(), "sessions")
+      val sessionsApi   = new SessionsApi(sessionsActor)
+      val webApp        = new WebApp(sessionsApi, roomApp, new ShogiMock)
+      val routes        = new Routes(webApp)
       context.spawn(WebServer(routes), "webserver")
 
       Behaviors.receiveSignal {

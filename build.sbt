@@ -3,7 +3,7 @@ import Dependencies._
 val dottyVersion     = "0.24.0-RC1"
 val scala213Version     = "2.13.2"
 
-ThisBuild / scalaVersion          := scala213Version
+ThisBuild / scalaVersion     := scala213Version
 ThisBuild / version          := "0.1.0-SNAPSHOT"
 ThisBuild / organization     := "com.example"
 ThisBuild / organizationName := "example"
