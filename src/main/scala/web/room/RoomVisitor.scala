@@ -1,9 +1,9 @@
-package web
+package web.room
 
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
 
-object Room {
+object RoomVisitor {
 
   case class Message(body: String)
 

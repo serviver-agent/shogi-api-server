@@ -1,4 +1,4 @@
-package web
+package web.room
 
 import java.util.UUID
 import akka.actor.typed.{ActorRef, Behavior}
