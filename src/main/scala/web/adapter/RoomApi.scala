@@ -1,4 +1,4 @@
-package web.room
+package web.adapter
 
 import java.util.UUID
 import java.nio.charset.StandardCharsets
@@ -8,7 +8,7 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.{Source, Flow, Sink}
 import akka.stream.typed.scaladsl.{ActorFlow, ActorSource}
 import akka.stream.OverflowStrategy
-import akka.http.scaladsl.model.{HttpResponse, HttpRequest, Uri}
+import akka.http.scaladsl.model.{HttpResponse, HttpRequest, Uri, HttpEntity}
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.AttributeKeys.webSocketUpgrade
 import akka.http.scaladsl.model.ws.{TextMessage, BinaryMessage, Message}
@@ -17,17 +17,9 @@ import akka.NotUsed
 import io.circe.{Decoder, Encoder, Json}
 import io.circe.parser
 
-import web.adapter.Requests._
-import web.adapter.RequestHelper
-
-// TODO: remove this import
-// implicit conversion String => ResponseEntity
-// ex:
-// HttpResponse(200, entity = "shogi-api-server"))
-//                            ^^^^^^^^^^^^^^^^^^
-import scala.language.implicitConversions
-
+import web.room._
 import RoomApi._
+import Requests._
 
 class RoomApi(actor: ActorRef[Rooms.Command], requestHelper: RequestHelper) {
 
@@ -43,7 +35,7 @@ class RoomApi(actor: ActorRef[Rooms.Command], requestHelper: RequestHelper) {
         val roomResponses =
           RoomInfos.map(RoomInfo => RoomResponse(RoomInfo.id.asString, RoomInfo.roomName))
         val responseString = encodeListRoomResponse(roomResponses)
-        HttpResponse(200, entity = responseString)
+        HttpResponse(200, entity = HttpEntity(responseString))
       }
 
     flow.via(responseMapping)
@@ -63,7 +55,7 @@ class RoomApi(actor: ActorRef[Rooms.Command], requestHelper: RequestHelper) {
     val responseMapping: Flow[Rooms.RoomInfo, HttpResponse, NotUsed] = Flow[Rooms.RoomInfo].map { RoomInfo =>
       val response       = RoomResponse(RoomInfo.id.asString, RoomInfo.roomName)
       val responseString = encodeCreateRoomResponse(response)
-      HttpResponse(200, entity = responseString)
+      HttpResponse(200, entity = HttpEntity(responseString))
     }
 
     request
@@ -94,7 +86,7 @@ class RoomApi(actor: ActorRef[Rooms.Command], requestHelper: RequestHelper) {
         val messageResponse =
           messages.map(m => MessageResponse(m.body))
         val responseString = encodeFetchMessageResponse(messageResponse)
-        HttpResponse(200, entity = responseString)
+        HttpResponse(200, entity = HttpEntity(responseString))
       }
 
     flow.via(responseMapping)
@@ -173,7 +165,7 @@ object RoomApi {
   }
   def decodeCreateRoomRequest(in: String): Either[HttpResponse, CreateRoomRequest] = {
     parser.parse(in).flatMap(createRoomDecoder.decodeJson).left.map { _ =>
-      HttpResponse(400, entity = "bad request. invalid json.")
+      HttpResponse(400, entity = HttpEntity("bad request. invalid json."))
     }
   }
   private val roomEncoder: Encoder[RoomResponse] = Encoder.instance { a =>
@@ -194,7 +186,7 @@ object RoomApi {
   }
   def decodeAddMessageRequest(in: String): Either[HttpResponse, AddMessageRequest] = {
     parser.parse(in).flatMap(addMessageDecoder.decodeJson).left.map { _ =>
-      HttpResponse(400, entity = "bad request. invalid json.")
+      HttpResponse(400, entity = HttpEntity("bad request. invalid json."))
     }
   }
   case class MessageResponse(body: String)

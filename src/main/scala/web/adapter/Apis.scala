@@ -1,7 +1,4 @@
-package web
-
-import web.session.SessionsApi
-import web.room.RoomApi
+package web.adapter
 
 trait Apis {
   def sessionsApi: SessionsApi

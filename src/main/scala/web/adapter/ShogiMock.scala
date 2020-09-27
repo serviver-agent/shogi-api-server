@@ -1,4 +1,4 @@
-package web
+package web.adapter
 
 import core.Shiai
 
