@@ -1,4 +1,4 @@
-package web.session
+package web.adapter
 
 import scala.concurrent.duration._
 
@@ -11,9 +11,9 @@ import akka.http.scaladsl.model.headers._
 import akka.util.Timeout
 import akka.NotUsed
 
+import web.session._
 import Sessions.SessionInfo
-import web.adapter.Requests._
-import web.adapter.RequestHelper
+import Requests._
 
 class SessionsApi(actor: ActorRef[Sessions.Command], requestHepler: RequestHelper) {
 

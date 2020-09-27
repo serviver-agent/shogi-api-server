@@ -8,8 +8,7 @@ import akka.http.scaladsl.model.HttpMethods._
 import akka.NotUsed
 
 import web.session.SessionId
-import web.adapter.Requests._
-import web.Apis
+import Requests._
 
 import Requests.{SimpleRequest, Action}
 
