@@ -1,17 +1,19 @@
 package web.adapter
 
+import java.nio.charset.StandardCharsets
+
 import scala.concurrent.duration._
 
 import akka.actor.typed.ActorRef
 import akka.stream.Materializer
 import akka.stream.typed.scaladsl.ActorFlow
 import akka.stream.scaladsl.{Flow, Source}
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse, HttpEntity}
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse, HttpEntity, ContentTypes}
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.model.ws.Message
 import akka.http.scaladsl.model.AttributeKeys.webSocketUpgrade
-import akka.util.Timeout
+import akka.util.{ByteString, Timeout}
 import akka.NotUsed
 
 import web.session._
@@ -23,6 +25,32 @@ class RequestHelper(
     actor: ActorRef[Sessions.Command],
     mat: Materializer
 ) {
+
+  def withCodec[A, B](
+      flow: Flow[A, B, NotUsed]
+  )(implicit decoder: Decoder[A], encoder: Encoder[B]): Flow[Request, HttpResponse, NotUsed] = {
+    Flow[Request].flatMapConcat { req =>
+      val sourceOptA: Source[Option[A], Any] =
+        req.http.entity.dataBytes.map(_.decodeString(StandardCharsets.UTF_8)).map(decoder.decode)
+      sourceOptA.flatMapConcat {
+        case None => Source.single(Responses.InvalidRequestJson)
+        case Some(a) =>
+          Source.single(a).via(flow).map { b =>
+            val byteString = ByteString.apply(encoder.encode(b), StandardCharsets.UTF_8)
+            HttpResponse(200, entity = HttpEntity.apply(ContentTypes.`application/json`, encoder.encode(b)))
+          }
+      }
+    }
+  }
+
+  def withEncoder[B](
+      flow: Flow[Request, B, NotUsed]
+  )(implicit encoder: Encoder[B]): Flow[Request, HttpResponse, NotUsed] = {
+    Flow[Request].via(flow).map { b =>
+      val byteString = ByteString.apply(encoder.encode(b), StandardCharsets.UTF_8)
+      HttpResponse(200, entity = HttpEntity.apply(ContentTypes.`application/json`, encoder.encode(b)))
+    }
+  }
 
   def withSession(flow: Flow[SessionRequest, HttpResponse, NotUsed]): Flow[Request, HttpResponse, NotUsed] = {
     implicit val timeout: Timeout = 100.minutes
@@ -76,6 +104,9 @@ object RequestHelper {
       HttpResponse(401).withHeaders(
         `WWW-Authenticate`(HttpChallenge(scheme = "Bearer", realm = "invalid_token")) :: Nil
       )
+
+    val InvalidRequestJson =
+      HttpResponse(400, entity = HttpEntity("invalid json"))
   }
 
   def parseBearer(request: HttpRequest): Either[HttpResponse, Bearer] =
