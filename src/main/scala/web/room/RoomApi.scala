@@ -1,9 +1,10 @@
-package web
+package web.room
 
 import java.util.UUID
 import java.nio.charset.StandardCharsets
 import scala.concurrent.duration._
 import akka.actor.typed.ActorRef
+import akka.stream.Materializer
 import akka.stream.scaladsl.{Source, Flow, Sink}
 import akka.stream.typed.scaladsl.{ActorFlow, ActorSource}
 import akka.stream.OverflowStrategy
@@ -16,6 +17,9 @@ import akka.NotUsed
 import io.circe.{Decoder, Encoder, Json}
 import io.circe.parser
 
+import web.adapter.Requests._
+import web.adapter.RequestHelper
+
 // TODO: remove this import
 // implicit conversion String => ResponseEntity
 // ex:
@@ -23,35 +27,14 @@ import io.circe.parser
 //                            ^^^^^^^^^^^^^^^^^^
 import scala.language.implicitConversions
 
-import RoomApp._
+import RoomApi._
 
-class RoomApp(actor: ActorRef[Rooms.Command]) {
+class RoomApi(actor: ActorRef[Rooms.Command], requestHelper: RequestHelper) {
 
-  def handleRequest: Flow[HttpRequest, HttpResponse, NotUsed] = {
-    Flow[HttpRequest].flatMapConcat { (r: HttpRequest) =>
-      val flow = r match {
-        case HttpRequest(GET, Uri.Path(RoomUrl.ListRooms), _, _, _)         => listRooms
-        case HttpRequest(POST, Uri.Path(RoomUrl.CreateRoom), _, _, _)       => createRoom
-        case HttpRequest(DELETE, Uri.Path(RoomUrl.DeleteRoom(id)), _, _, _) => roomIdRequest(id).via(deleteRoom)
-        case HttpRequest(GET, Uri.Path(RoomUrl.FetchMessages(id)), _, _, _) => roomIdRequest(id).via(fetchMessages)
-        case HttpRequest(POST, Uri.Path(RoomUrl.AddMessage(id)), _, _, _)   => roomIdRequest(id).via(addMessage)
-        case req @ HttpRequest(GET, Uri.Path(RoomUrl.SubscribeMessage(_)), _, _, _) =>
-          req.attribute(webSocketUpgrade) match {
-            case Some(upgrade) =>
-              Flow.fromFunction[HttpRequest, HttpResponse](req => upgrade.handleMessages(subscribeMessage(req)))
-            case None =>
-              Flow.fromFunction((_: HttpRequest) => HttpResponse(400, entity = "Not a valid websocket request!"))
-          }
-        // FIXME: handle other path to 404 error
-      }
-      Source.single(r).via(flow)
-    }
-  }
-
-  private val listRooms: Flow[HttpRequest, HttpResponse, NotUsed] = {
+  def listRooms: Action[Request] = {
     implicit val timeout: Timeout = 1.seconds
 
-    val flow: Flow[HttpRequest, List[Rooms.RoomInfo], NotUsed] = ActorFlow.ask(parallelism = 8)(ref = actor)(
+    val flow: Flow[Request, List[Rooms.RoomInfo], NotUsed] = ActorFlow.ask(parallelism = 8)(ref = actor)(
       makeMessage = (_, ref) => Rooms.ListRooms(ref)
     )
 
@@ -66,11 +49,11 @@ class RoomApp(actor: ActorRef[Rooms.Command]) {
     flow.via(responseMapping)
   }
 
-  private val createRoom: Flow[HttpRequest, HttpResponse, NotUsed] = {
+  def createRoom: Action[Request] = {
     implicit val timeout: Timeout = 1.seconds
 
-    val request: Flow[HttpRequest, Either[HttpResponse, CreateRoomRequest], NotUsed] = Flow[HttpRequest].flatMapConcat {
-      _.entity.dataBytes.map(_.decodeString(StandardCharsets.UTF_8)).map(decodeCreateRoomRequest)
+    val request: Flow[Request, Either[HttpResponse, CreateRoomRequest], NotUsed] = Flow[Request].flatMapConcat {
+      _.http.entity.dataBytes.map(_.decodeString(StandardCharsets.UTF_8)).map(decodeCreateRoomRequest)
     }
 
     val flow: Flow[CreateRoomRequest, Rooms.RoomInfo, NotUsed] = ActorFlow.ask(parallelism = 8)(ref = actor)(
@@ -91,18 +74,19 @@ class RoomApp(actor: ActorRef[Rooms.Command]) {
       .map(_.merge)
   }
 
-  private val deleteRoom: Flow[HttpRequestWithRoomId, HttpResponse, NotUsed] = {
-    Flow.fromFunction { requestWithRoomId =>
-      actor ! Rooms.DeleteRoom(requestWithRoomId.roomId)
-      HttpResponse(202)
-    }
+  def deleteRoom(_roomId: String): Action[Request] = Flow.fromFunction { _ =>
+    val roomId = Rooms.RoomId.fromString(_roomId)
+    actor ! Rooms.DeleteRoom(roomId)
+    HttpResponse(202)
   }
 
-  private val fetchMessages: Flow[HttpRequestWithRoomId, HttpResponse, NotUsed] = {
+  def fetchMessages(_roomId: String): Action[Request] = {
     implicit val timeout: Timeout = 1.seconds
 
-    val flow: Flow[HttpRequestWithRoomId, List[Room.Message], NotUsed] = ActorFlow.ask(parallelism = 8)(ref = actor)(
-      makeMessage = (req, ref) => Rooms.RoomCommand(req.roomId, Room.FetchMessages(ref))
+    val roomId = Rooms.RoomId.fromString(_roomId)
+
+    val flow: Flow[Request, List[Room.Message], NotUsed] = ActorFlow.ask(parallelism = 8)(ref = actor)(
+      makeMessage = (_, ref) => Rooms.RoomCommand(roomId, Room.FetchMessages(ref))
     )
 
     val responseMapping: Flow[List[Room.Message], HttpResponse, NotUsed] =
@@ -116,13 +100,14 @@ class RoomApp(actor: ActorRef[Rooms.Command]) {
     flow.via(responseMapping)
   }
 
-  private val addMessage: Flow[HttpRequestWithRoomId, HttpResponse, NotUsed] = {
-    val request: Flow[HttpRequestWithRoomId, Either[HttpResponse, (Rooms.RoomId, AddMessageRequest)], NotUsed] =
-      Flow[HttpRequestWithRoomId].flatMapConcat { req =>
+  def addMessage(_roomId: String): Action[Request] = {
+    val roomId = Rooms.RoomId.fromString(_roomId)
+    val request: Flow[Request, Either[HttpResponse, (Rooms.RoomId, AddMessageRequest)], NotUsed] =
+      Flow[Request].flatMapConcat { req =>
         val addMessageRequest: Source[Either[HttpResponse, AddMessageRequest], _] =
-          req.request.entity.dataBytes.map(_.decodeString(StandardCharsets.UTF_8)).map(decodeAddMessageRequest)
+          req.http.entity.dataBytes.map(_.decodeString(StandardCharsets.UTF_8)).map(decodeAddMessageRequest)
         addMessageRequest.flatMapConcat {
-          case Right(value) => Source.single(Right((req.roomId, value)))
+          case Right(value) => Source.single(Right((roomId, value)))
           case Left(value)  => Source.single(Left(value))
         }
       }
@@ -139,55 +124,45 @@ class RoomApp(actor: ActorRef[Rooms.Command]) {
     }
   }
 
-  private val subscribeMessage: HttpRequest => Flow[Message, Message, NotUsed] = { request =>
-    val chatRoomId = Rooms.RoomId.fromString(request.uri.path.toString.drop("/room/".length).take(36)) // FIXME refactor
+  def subscribeMessage(_roomId: String): Action[Request] =
+    requestHelper.websocket { request =>
+      val chatRoomId = Rooms.RoomId.fromString(_roomId)
 
-    val source = ActorSource
-      .actorRef[Room.Message](
-        completionMatcher = PartialFunction.empty,
-        failureMatcher = PartialFunction.empty,
-        bufferSize = 8,
-        overflowStrategy = OverflowStrategy.fail
-      )
-      .mapMaterializedValue { subscribeTo => actor ! Rooms.RoomCommand(chatRoomId, Room.SubscribeMessage(subscribeTo)) }
+      val source = ActorSource
+        .actorRef[Room.Message](
+          completionMatcher = PartialFunction.empty,
+          failureMatcher = PartialFunction.empty,
+          bufferSize = 8,
+          overflowStrategy = OverflowStrategy.fail
+        )
+        .mapMaterializedValue { subscribeTo =>
+          actor ! Rooms.RoomCommand(chatRoomId, Room.SubscribeMessage(subscribeTo))
+        }
 
-    val responseMapping: Flow[Room.Message, TextMessage, NotUsed] = Flow.fromFunction { message =>
-      TextMessage(encodeMessageResponse(MessageResponse(message.body)))
-    }
-
-    val requestMapping: Flow[Message, Room.Message, NotUsed] = Flow[Message]
-      .flatMapConcat {
-        case tm: TextMessage   => tm.textStream
-        case bm: BinaryMessage => Source.empty
+      val responseMapping: Flow[Room.Message, TextMessage, NotUsed] = Flow.fromFunction { message =>
+        TextMessage(encodeMessageResponse(MessageResponse(message.body)))
       }
-      .map(body => Room.Message(body))
 
-    val addMessage: Sink[Room.Message, NotUsed] = Sink
-      .foreach[Room.Message] { message => actor ! Rooms.RoomCommand(chatRoomId, Room.AddMessage(message)) }
-      .mapMaterializedValue(_ => NotUsed)
+      val requestMapping: Flow[Message, Room.Message, NotUsed] = Flow[Message]
+        .flatMapConcat {
+          case tm: TextMessage   => tm.textStream
+          case bm: BinaryMessage => Source.empty
+        }
+        .map(body => Room.Message(body))
 
-    Flow.fromSinkAndSource(
-      requestMapping.to(addMessage),
-      source.via(responseMapping)
-    )
-  }
+      val addMessage: Sink[Room.Message, NotUsed] = Sink
+        .foreach[Room.Message] { message => actor ! Rooms.RoomCommand(chatRoomId, Room.AddMessage(message)) }
+        .mapMaterializedValue(_ => NotUsed)
+
+      Flow.fromSinkAndSource(
+        requestMapping.to(addMessage),
+        source.via(responseMapping)
+      )
+    }
 
 }
 
-object RoomApp {
-
-  case class HttpRequestWithRoomId(request: HttpRequest, roomId: Rooms.RoomId)
-  def roomIdRequest(roomId: String): Flow[HttpRequest, HttpRequestWithRoomId, NotUsed] =
-    Flow[HttpRequest].map(HttpRequestWithRoomId(_, Rooms.RoomId(UUID.fromString(roomId))))
-
-  object RoomUrl {
-    val ListRooms        = "/room"
-    val CreateRoom       = "/room"
-    val DeleteRoom       = """/room/([\da-fA-F]{8}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{12})""".r
-    val FetchMessages    = """/room/([\da-fA-F]{8}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{12})""".r
-    val AddMessage       = """/room/([\da-fA-F]{8}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{12})""".r
-    val SubscribeMessage = """/room/([\da-fA-F]{8}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{12})/stream""".r
-  }
+object RoomApi {
 
   case class CreateRoomRequest(name: String)
   case class RoomResponse(chatRoomId: String, name: String)

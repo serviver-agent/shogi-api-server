@@ -1,4 +1,4 @@
-package web
+package web.adapter
 
 import scala.concurrent.Future
 import akka.actor.typed.{Behavior, Terminated}
@@ -9,7 +9,7 @@ import akka.NotUsed
 
 object WebServer {
 
-  def apply(routes: Routes): Behavior[NotUsed] = {
+  def apply(router: Router): Behavior[NotUsed] = {
     Behaviors.setup { context =>
       implicit val system = context.system.classicSystem
       implicit val ec     = system.dispatcher
@@ -20,7 +20,7 @@ object WebServer {
         serverSource
           .to(Sink.foreach { connection => // foreach materializes the source
             println("Accepted new connection from " + connection.remoteAddress)
-            connection handleWith routes.requestHandler
+            connection handleWith router.handleRequest
           })
           .run()
 

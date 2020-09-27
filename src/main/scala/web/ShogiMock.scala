@@ -2,29 +2,7 @@ package web
 
 import core.Shiai
 
-import akka.stream.scaladsl.{Source, Flow}
-import akka.http.scaladsl.model.{HttpResponse, Uri, HttpRequest, HttpEntity, ContentTypes}
-import akka.http.scaladsl.model.HttpMethods._
-import akka.NotUsed
-
 class ShogiMock {
-
-  def handleRequest: Flow[HttpRequest, HttpResponse, NotUsed] = {
-    Flow[HttpRequest].flatMapConcat { (r: HttpRequest) =>
-      val flow = r match {
-        case req @ HttpRequest(GET, Uri.Path("/shogi"), _, _, _) =>
-          Flow.fromFunction((_: HttpRequest) =>
-            HttpResponse(200, entity = HttpEntity(ContentTypes.`application/json`, shogiJson()))
-          )
-        // FIXME: handle other path to 404 error
-      }
-      Source.single(r).via(flow)
-    }
-  }
-
-  def shogiJson(): String = {
-    JsonCodec.shiaiEncoder(Shiai.init).spaces2
-  }
 
   object JsonCodec {
 
