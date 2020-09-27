@@ -23,47 +23,23 @@ import Requests._
 
 class RoomApi(actor: ActorRef[Rooms.Command], requestHelper: RequestHelper) {
 
-  def listRooms: Action[Request] = {
+  def listRooms: Action[Request] = requestHelper.withEncoder[List[RoomResponse]] {
     implicit val timeout: Timeout = 1.seconds
 
-    val flow: Flow[Request, List[Rooms.RoomInfo], NotUsed] = ActorFlow.ask(parallelism = 8)(ref = actor)(
-      makeMessage = (_, ref) => Rooms.ListRooms(ref)
-    )
+    val ask: Flow[Request, List[Rooms.RoomInfo], NotUsed] = ActorFlow
+      .ask(parallelism = 8)(ref = actor)(makeMessage = (_, ref) => Rooms.ListRooms(ref))
 
-    val responseMapping: Flow[List[Rooms.RoomInfo], HttpResponse, NotUsed] =
-      Flow[List[Rooms.RoomInfo]].map { RoomInfos =>
-        val roomResponses =
-          RoomInfos.map(RoomInfo => RoomResponse(RoomInfo.id.asString, RoomInfo.roomName))
-        val responseString = encodeListRoomResponse(roomResponses)
-        HttpResponse(200, entity = HttpEntity(responseString))
-      }
-
-    flow.via(responseMapping)
+    ask.map(_.map(info => RoomResponse(info.id.asString, info.roomName)))
   }
 
-  def createRoom: Action[Request] = {
+  def createRoom: Action[Request] = requestHelper.withCodec[CreateRoomRequest, RoomResponse] {
     implicit val timeout: Timeout = 1.seconds
-
-    val request: Flow[Request, Either[HttpResponse, CreateRoomRequest], NotUsed] = Flow[Request].flatMapConcat {
-      _.http.entity.dataBytes.map(_.decodeString(StandardCharsets.UTF_8)).map(decodeCreateRoomRequest)
-    }
 
     val flow: Flow[CreateRoomRequest, Rooms.RoomInfo, NotUsed] = ActorFlow.ask(parallelism = 8)(ref = actor)(
       makeMessage = (message, ref) => Rooms.CreateRoom(message.name, ref)
     )
 
-    val responseMapping: Flow[Rooms.RoomInfo, HttpResponse, NotUsed] = Flow[Rooms.RoomInfo].map { RoomInfo =>
-      val response       = RoomResponse(RoomInfo.id.asString, RoomInfo.roomName)
-      val responseString = encodeCreateRoomResponse(response)
-      HttpResponse(200, entity = HttpEntity(responseString))
-    }
-
-    request
-      .flatMapConcat {
-        case Right(value) => Source.single(value).via(flow).via(responseMapping).map(Right(_))
-        case Left(value)  => Source.single(Left(value))
-      }
-      .map(_.merge)
+    flow.map { info => RoomResponse(info.id.asString, info.roomName) }
   }
 
   def deleteRoom(_roomId: String): Action[Request] = Flow.fromFunction { _ =>
@@ -175,9 +151,17 @@ object RoomApi {
     )
   }
   def encodeCreateRoomResponse(res: RoomResponse): String = roomEncoder(res).noSpaces
-  def encodeListRoomResponse(res: List[RoomResponse]): String = {
+
+  implicit val adapterCreateRoomDecoder: web.adapter.Decoder[CreateRoomRequest] = { req =>
+    parser.parse(req).flatMap(createRoomDecoder.decodeJson).toOption
+  }
+
+  implicit val adapterCreateRoomEncoder: web.adapter.Encoder[RoomResponse] = { res => roomEncoder(res).noSpaces }
+
+  implicit val adapterListRoomsEncoder: web.adapter.Encoder[List[RoomResponse]] = { res =>
     Encoder.encodeList(roomEncoder)(res).noSpaces
   }
+
   case class AddMessageRequest(body: String)
   private val addMessageDecoder: Decoder[AddMessageRequest] = Decoder.instance { c =>
     for {
